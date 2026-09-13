@@ -1,0 +1,41 @@
+{
+  "openapi": "3.0.3",
+  "info": { "title": "Acme API", "version": "2026-09-01" },
+  "paths": {
+    "/v1/invoices": {
+      "get": {
+        "operationId": "listInvoices",
+        "parameters": [
+          { "name": "status", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "page_size", "in": "query", "required": true, "schema": { "type": "integer", "default": 100 } }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "InvoiceLine": {
+        "type": "object",
+        "properties": {
+          "unit_amount": { "type": "integer" },
+          "currency": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      },
+      "Invoice": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "lines": { "type": "array", "items": { "type": "object" } }
+        }
+      },
+      "Refund": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "cause": { "type": "string" }
+        }
+      }
+    }
+  }
+}
