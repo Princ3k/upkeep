@@ -128,9 +128,9 @@ exercise — migration guides are dense with things worth reporting and nearly
 empty of things safe to fix — did not move across three independent extractors.
 That is the number worth trusting here.
 
-**The flash model extracted more than the pro model**, 93 against 79, and more
-than twice as many call patterns. Which is a caution about assuming the bigger
-model is better at a transcription task, not a recommendation: see below.
+**The flash model returned more records than the pro model**, 93 against 79.
+Do not read that as flash being better: the ablation below shows run-to-run
+variance large enough to swallow the whole gap.
 
 ### The number that actually matters: 60%
 
@@ -195,3 +195,54 @@ extraction is machine-produced and reproducible, have someone who has not seen
 the extractions write expectations for each guide, and score recall and semantic
 precision against those. Until then this measures one thing, and should only
 claim one thing — **nothing was invented.**
+
+## Does the prompt explain pro's low call-pattern count?
+
+No. It is run-to-run variance, and the check that showed it also undermines the
+A/B comparison above.
+
+The pro run produced 8 `call_pattern_changed` against flash's 18, and **zero** on
+the three most code-dense guides. The obvious suspect was rule 2 of the prompt —
+"use `semantics_changed` for anything that does not fit" — being followed more
+conservatively. So the same model was re-run on those same three guides, once
+with the current prompt and once with a rule 3 rewritten to insist that a change
+the document demonstrates with code is never `semantics_changed`:
+
+| guide | prompt | call patterns | total |
+| --- | --- | --- | --- |
+| shopify-ruby-older | baseline | 4 | 14 |
+| shopify-ruby-older | stronger | 10 | 14 |
+| shopify-ruby-v10 | baseline | 6 | 12 |
+| shopify-ruby-v10 | stronger | 6 | 13 |
+| twilio-python-upgrade | baseline | 3 | 16 |
+| twilio-python-upgrade | stronger | 1 | 6 |
+
+The baseline column is the finding. **Those three guides produced 0 call patterns
+in the scored run and 13 here — same model, same prompt, same documents.** Whatever
+suppressed them was not the wording.
+
+Two consequences:
+
+- **The pro-versus-flash gap is inside the noise.** 79 against 93 on single runs
+  cannot support "flash extracted more", and this README previously said so.
+  Ranking two extractors needs repeated runs and a variance estimate, not one
+  pass each.
+- **The stronger prompt is not simply better.** It doubled call patterns on one
+  guide, changed nothing on another, and on the third cut total extraction from
+  16 changes to 6. A rule that makes one record type more attractive can suppress
+  everything else.
+
+Reproduce with `evals/ablate.py`.
+
+## The review tool
+
+`evals/build_review.py` bundles the corpus, every run and the contested
+identifiers into `review-data.json`, and `evals/review.html` is a published
+artifact over it: the runs side by side, each guide's source next to what every
+run extracted, and an adjudication queue for the identifiers only some runs
+found.
+
+That queue is the point. Grounding proves nothing was invented and says nothing
+about what was missed, so recall has to come from a person reading the source.
+Each verdict — in the guide, or an over-read — is stored per identifier, and the
+page computes per-run recall from the confirmed set as the judging proceeds.

@@ -1,0 +1,518 @@
+<title>Extraction Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#EEF2F1; --surface:#FCFDFD; --surface-2:#E4EAE9; --raised:#FFFFFF;
+  --ink:#12201F; --ink-2:#54615F; --ink-3:#7B8886; --rule:#D1D9D8; --rule-2:#B4C0BE;
+  --accent:#0E6E63; --accent-soft:#DBEAE7; --accent-ink:#0A554C;
+  --ok:#2F6B3A; --ok-bg:#E0EFE3; --no:#A8322B; --no-bg:#F6E4E2;
+  --k-sym:#8A5806; --k-sym-bg:#F6EBD9;
+  --k-pat:#1C5C86; --k-pat-bg:#DEEBF4;
+  --k-sem:#6B5B8A; --k-sem-bg:#E9E4F2;
+  --k-fld:#2F6B3A; --k-fld-bg:#E0EFE3;
+  --shadow:0 1px 2px rgba(18,32,31,.06),0 4px 12px rgba(18,32,31,.04);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E1413; --surface:#171F1E; --surface-2:#1F2827; --raised:#1C2524;
+  --ink:#E4EAE9; --ink-2:#95A3A0; --ink-3:#71807D; --rule:#28322F; --rule-2:#3A4644;
+  --accent:#57C6B4; --accent-soft:#14302C; --accent-ink:#7FD8C9;
+  --ok:#7FCE92; --ok-bg:#17281B; --no:#EB8C82; --no-bg:#2C1A19;
+  --k-sym:#DCA94C; --k-sym-bg:#2B2314;
+  --k-pat:#72B6DE; --k-pat-bg:#152632;
+  --k-sem:#B7A6D6; --k-sem-bg:#241E30;
+  --k-fld:#7FCE92; --k-fld-bg:#17281B;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 12px rgba(0,0,0,.2);
+}}
+:root[data-theme="dark"]{
+  --bg:#0E1413; --surface:#171F1E; --surface-2:#1F2827; --raised:#1C2524;
+  --ink:#E4EAE9; --ink-2:#95A3A0; --ink-3:#71807D; --rule:#28322F; --rule-2:#3A4644;
+  --accent:#57C6B4; --accent-soft:#14302C; --accent-ink:#7FD8C9;
+  --ok:#7FCE92; --ok-bg:#17281B; --no:#EB8C82; --no-bg:#2C1A19;
+  --k-sym:#DCA94C; --k-sym-bg:#2B2314;
+  --k-pat:#72B6DE; --k-pat-bg:#152632;
+  --k-sem:#B7A6D6; --k-sem-bg:#241E30;
+  --k-fld:#7FCE92; --k-fld-bg:#17281B;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 12px rgba(0,0,0,.2);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:Archivo,"Helvetica Neue",Arial,sans-serif;font-size:14px;line-height:1.5;
+  -webkit-font-smoothing:antialiased}
+.mono,code,pre{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.01em}
+
+/* ---------- shell ---------- */
+.wrap{max-width:1180px;margin:0 auto;padding-inline:18px;padding-block:0 64px}
+header.top{padding-block:26px 0;border-bottom:1px solid var(--rule);margin-bottom:22px}
+.eyebrow{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--ink-3);margin-bottom:8px}
+h1{font-size:26px;margin-bottom:6px}
+.sub{color:var(--ink-2);max-width:64ch;margin-bottom:20px}
+nav.tabs{display:flex;gap:2px;flex-wrap:wrap}
+nav.tabs button{
+  appearance:none;background:none;border:0;border-bottom:2px solid transparent;
+  font:inherit;font-weight:500;color:var(--ink-2);padding:9px 15px;cursor:pointer;
+  border-radius:4px 4px 0 0}
+nav.tabs button:hover{color:var(--ink);background:var(--surface-2)}
+nav.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+nav.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.panel[hidden]{display:none!important}
+
+/* ---------- scoreboard ---------- */
+.board{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px;margin-bottom:26px}
+.stat{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:14px 16px}
+.stat .lab{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);margin-bottom:7px}
+.stat .val{font-size:26px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat .val small{font-size:13px;font-weight:500;color:var(--ink-3);margin-left:3px}
+.stat .foot{font-size:12px;color:var(--ink-2);margin-top:4px}
+
+.tscroll{overflow-x:auto;border:1px solid var(--rule);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:620px;font-size:13px}
+th{text-align:left;font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink-3);font-weight:500;padding:11px 14px;
+  border-bottom:1px solid var(--rule-2);white-space:nowrap;background:var(--surface-2)}
+td{padding:10px 14px;border-bottom:1px solid var(--rule);vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--surface-2)}
+td.num,th.num{text-align:right;font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
+td.name{font-family:"JetBrains Mono",monospace;font-size:12px}
+
+/* ---------- chips ---------- */
+.chip{display:inline-block;font-family:"JetBrains Mono",monospace;font-size:10px;
+  font-weight:500;padding:2.5px 7px;border-radius:3px;white-space:nowrap;letter-spacing:.02em}
+.k-symbol_removed{background:var(--k-sym-bg);color:var(--k-sym)}
+.k-call_pattern_changed{background:var(--k-pat-bg);color:var(--k-pat)}
+.k-semantics_changed{background:var(--k-sem-bg);color:var(--k-sem)}
+.k-field_renamed{background:var(--k-fld-bg);color:var(--k-fld)}
+.k-endpoint_removed,.k-param_required_added{background:var(--surface-2);color:var(--ink-2)}
+.run-chip{background:var(--accent-soft);color:var(--accent-ink);border:1px solid transparent}
+.run-chip.off{background:transparent;color:var(--ink-3);border-color:var(--rule-2);opacity:.75}
+
+/* ---------- guides view ---------- */
+.picker{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.picker button{appearance:none;font:inherit;font-size:12px;font-family:"JetBrains Mono",monospace;
+  background:var(--surface);border:1px solid var(--rule-2);color:var(--ink-2);
+  padding:5px 10px;border-radius:4px;cursor:pointer}
+.picker button:hover{border-color:var(--accent);color:var(--ink)}
+.picker button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+:root[data-theme="dark"] .picker button[aria-pressed="true"],
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .picker button[aria-pressed="true"]{color:#0E1413}}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media(max-width:900px){.split{grid-template-columns:1fr}}
+.pane{background:var(--surface);border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+.pane-head{padding:10px 14px;border-bottom:1px solid var(--rule);background:var(--surface-2);
+  font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink-3);display:flex;justify-content:space-between;gap:10px}
+.src{margin:0;padding:14px;max-height:640px;overflow:auto;font-size:11.5px;line-height:1.65;
+  white-space:pre-wrap;word-break:break-word;color:var(--ink-2)}
+.src mark{background:var(--accent-soft);color:var(--accent-ink);padding:0 2px;border-radius:2px}
+.changes{max-height:640px;overflow:auto;padding:10px}
+.chg{border:1px solid var(--rule);border-radius:5px;padding:11px 13px;margin-bottom:9px;background:var(--raised)}
+.chg-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.chg-label{font-family:"JetBrains Mono",monospace;font-size:12px;font-weight:500;word-break:break-all}
+.chg-note{font-size:12px;color:var(--ink-2);margin-top:5px}
+.ba{display:grid;grid-template-columns:1fr;gap:6px;margin-top:8px}
+.ba pre{margin:0;padding:8px 10px;border-radius:4px;font-size:11px;line-height:1.5;
+  overflow-x:auto;background:var(--surface-2);border-left:2px solid var(--rule-2)}
+.ba pre.after{border-left-color:var(--accent)}
+.ba .tag{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);margin-bottom:2px}
+
+/* ---------- adjudicate ---------- */
+.adj-intro{background:var(--surface);border:1px solid var(--rule);border-left:3px solid var(--accent);
+  border-radius:5px;padding:15px 17px;margin-bottom:18px}
+.adj-intro p{margin:0 0 8px;font-size:13.5px;color:var(--ink-2)}
+.adj-intro p:last-child{margin-bottom:0}
+.adj-intro b{color:var(--ink);font-weight:600}
+.queue-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.progress{flex:1;min-width:160px;height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .25s}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:6px;
+  padding:16px 18px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card.done{opacity:.6}
+.card-top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.leaf{font-family:"JetBrains Mono",monospace;font-size:15px;font-weight:500}
+.where{font-size:11.5px;color:var(--ink-3);font-family:"JetBrains Mono",monospace}
+.ctx{margin:10px 0;padding:9px 12px;background:var(--surface-2);border-radius:4px;
+  font-family:"JetBrains Mono",monospace;font-size:11px;line-height:1.6;
+  white-space:pre-wrap;word-break:break-word;max-height:150px;overflow:auto}
+.ctx .ln{color:var(--ink-3);user-select:none}
+.ctx mark{background:var(--accent-soft);color:var(--accent-ink);border-radius:2px}
+.ctx.none{color:var(--ink-3);font-style:italic;font-family:inherit}
+.verdicts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.verdicts button{appearance:none;font:inherit;font-size:12.5px;font-weight:500;cursor:pointer;
+  padding:7px 13px;border-radius:5px;border:1px solid var(--rule-2);background:var(--surface);
+  color:var(--ink-2)}
+.verdicts button:hover{border-color:var(--ink-3);color:var(--ink)}
+.verdicts button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.verdicts button[aria-pressed="true"].yes{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+.verdicts button[aria-pressed="true"].no{background:var(--no-bg);border-color:var(--no);color:var(--no)}
+.verdicts button[aria-pressed="true"].skip{background:var(--surface-2);border-color:var(--ink-3);color:var(--ink)}
+.saved{font-size:11.5px;color:var(--ink-3);margin-left:auto;align-self:center}
+
+.empty{padding:40px 20px;text-align:center;color:var(--ink-3)}
+.note{font-size:12.5px;color:var(--ink-3);margin-top:10px}
+footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);
+  font-size:12px;color:var(--ink-3)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <p class="eyebrow">upkeep · guide extraction</p>
+  <h1>Extraction Review</h1>
+  <p class="sub">Three runs over ten real migration guides. Grounding proved nothing was
+  invented; it cannot tell you what was missed. That is what the Adjudicate tab is for —
+  your verdicts are the only source of recall here.</p>
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="t-overview" aria-selected="true" aria-controls="p-overview">Overview</button>
+    <button role="tab" id="t-guides" aria-selected="false" aria-controls="p-guides">Guides</button>
+    <button role="tab" id="t-adj" aria-selected="false" aria-controls="p-adj">Adjudicate</button>
+  </nav>
+</header>
+
+<section class="panel" id="p-overview" role="tabpanel" aria-labelledby="t-overview">
+  <div class="board" id="board"></div>
+  <div class="tscroll"><table id="overview-table"></table></div>
+  <p class="note" id="overview-note"></p>
+</section>
+
+<section class="panel" id="p-guides" role="tabpanel" aria-labelledby="t-guides" hidden>
+  <div class="picker" id="guide-picker"></div>
+  <div class="split">
+    <div class="pane">
+      <div class="pane-head"><span id="src-title">source</span><span id="src-meta"></span></div>
+      <pre class="src" id="src"></pre>
+    </div>
+    <div class="pane">
+      <div class="pane-head"><span>extracted changes</span><span id="chg-meta"></span></div>
+      <div class="changes" id="changes"></div>
+    </div>
+  </div>
+</section>
+
+<section class="panel" id="p-adj" role="tabpanel" aria-labelledby="t-adj" hidden>
+  <div class="adj-intro">
+    <p><b>Every identifier below was found by some runs and missed by others.</b>
+    Each one is either a real change one run missed, or something a run read into the
+    document that is not there. No automatic check can tell those apart.</p>
+    <p>Judge against the quoted source, not against the runs. <b>In the guide</b> counts
+    it as a real change that the other runs missed; <b>not in the guide</b> marks it an
+    over-read.</p>
+  </div>
+  <div class="queue-bar">
+    <strong id="adj-count"></strong>
+    <div class="progress"><i id="adj-bar"></i></div>
+    <span class="saved" id="adj-store"></span>
+  </div>
+  <div class="board" id="recall-board"></div>
+  <div id="queue"></div>
+</section>
+
+<footer>
+  Ten published migration guides from Shopify and Twilio SDK repositories, extracted by
+  <span class="mono">evals/extract.py</span> and scored by <span class="mono">evals/score.py</span>.
+  Verdicts are stored per identifier and can be read back to compute recall.
+</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var DATA = window.__REVIEW || { runs: [], guides: [] };
+  var RUNS = DATA.runs, GUIDES = DATA.guides;
+  var verdicts = Object.create(null);
+  var db = null, storeLabel = "storing locally";
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function key(stem, leaf) { return stem + "__" + leaf; }
+
+  /* ---------------- persistence: db if granted, else this browser ------- */
+  function localLoad() {
+    try {
+      var raw = localStorage.getItem("upkeep-verdicts");
+      if (raw) verdicts = JSON.parse(raw) || Object.create(null);
+    } catch (e) { /* private window, blocked storage — page still works */ }
+  }
+  function localSave() {
+    try { localStorage.setItem("upkeep-verdicts", JSON.stringify(verdicts)); }
+    catch (e) { /* ignore */ }
+  }
+  function saveVerdict(stem, leaf, verdict) {
+    var k = key(stem, leaf);
+    if (verdict === null) { delete verdicts[k]; } else { verdicts[k] = verdict; }
+    localSave();
+    if (db) {
+      var doc = db.doc("verdicts/" + k);
+      var write = verdict === null
+        ? doc.delete()
+        : doc.set({ guide: stem, leaf: leaf, verdict: verdict, at: Date.now() });
+      write.catch(function () { /* keep the local copy; surface nothing noisy */ });
+    }
+    renderQueue();
+    renderRecall();
+  }
+
+  function connectDb() {
+    if (!window.claude || !window.claude.use) return;
+    window.claude.use("db").then(function (handle) {
+      if (!handle) return;
+      db = handle;
+      storeLabel = "saved for everyone with the link";
+      db.collection("verdicts").onSnapshot(function (snap) {
+        snap.docs.forEach(function (d) {
+          var v = d.data();
+          if (v && v.guide && v.leaf) verdicts[key(v.guide, v.leaf)] = v.verdict;
+        });
+        localSave();
+        renderQueue();
+        renderRecall();
+        setStore();
+      }, function () { /* stay on the local copy */ });
+      setStore();
+    }).catch(function () { /* stay on the local copy */ });
+  }
+  function setStore() {
+    document.getElementById("adj-store").textContent = storeLabel;
+  }
+
+  /* ---------------- overview -------------------------------------------- */
+  function runTotals(name) {
+    var t = { changes: 0, grounded: 0, kinds: {}, tiers: { A: 0, B: 0, C: 0 } };
+    GUIDES.forEach(function (g) {
+      var r = g.runs[name];
+      if (!r) return;
+      r.changes.forEach(function (c) {
+        t.changes++;
+        if (c.grounded) t.grounded++;
+        t.kinds[c.kind] = (t.kinds[c.kind] || 0) + 1;
+      });
+      ["A", "B", "C"].forEach(function (k) { t.tiers[k] += r.tiers[k] || 0; });
+    });
+    return t;
+  }
+
+  function renderOverview() {
+    var board = document.getElementById("board");
+    var totalContested = GUIDES.reduce(function (n, g) {
+      return n + g.agreement.filter(function (a) { return a.contested; }).length;
+    }, 0);
+    var all = RUNS.map(runTotals);
+    var changes = all.reduce(function (n, t) { return n + t.changes; }, 0);
+    var grounded = all.reduce(function (n, t) { return n + t.grounded; }, 0);
+
+    board.innerHTML =
+      card("guides", GUIDES.length, "real published documents") +
+      card("changes extracted", changes, RUNS.length + " runs") +
+      card("grounded", grounded + " / " + changes,
+           grounded === changes ? "nothing invented" : (changes - grounded) + " not in source") +
+      card("contested", totalContested, "identifiers only some runs found") +
+      card("auto-patchable", all.map(function (t) { return t.tiers.A; }).join(" / "),
+           "Tier A, per run");
+
+    var head = "<thead><tr><th>guide</th>" +
+      RUNS.map(function (r) { return '<th class="num">' + esc(r) + "</th>"; }).join("") +
+      '<th class="num">shared</th><th class="num">contested</th></tr></thead>';
+    var body = GUIDES.map(function (g) {
+      var shared = g.agreement.filter(function (a) { return !a.contested; }).length;
+      var cont = g.agreement.length - shared;
+      return "<tr><td class='name'>" + esc(g.stem) + "</td>" +
+        RUNS.map(function (r) {
+          var run = g.runs[r];
+          return '<td class="num">' + (run ? run.changes.length : "–") + "</td>";
+        }).join("") +
+        '<td class="num">' + shared + '</td><td class="num">' + cont + "</td></tr>";
+    }).join("");
+    document.getElementById("overview-table").innerHTML = head + "<tbody>" + body + "</tbody>";
+
+    var agree = GUIDES.reduce(function (acc, g) {
+      g.agreement.forEach(function (a) { acc.total++; if (!a.contested) acc.shared++; });
+      return acc;
+    }, { total: 0, shared: 0 });
+    document.getElementById("overview-note").textContent =
+      "All " + RUNS.length + " runs name the same identifier " +
+      (agree.total ? Math.round(agree.shared / agree.total * 100) : 0) +
+      "% of the time. Every run is perfectly grounded, so that gap is not invention — " +
+      "it is disagreement about what these documents say.";
+  }
+  function card(lab, val, foot) {
+    return '<div class="stat"><div class="lab">' + esc(lab) + '</div><div class="val">' +
+      esc(val) + '</div><div class="foot">' + esc(foot) + "</div></div>";
+  }
+
+  /* ---------------- guides ---------------------------------------------- */
+  var currentGuide = 0;
+  function renderPicker() {
+    document.getElementById("guide-picker").innerHTML = GUIDES.map(function (g, i) {
+      return '<button data-i="' + i + '" aria-pressed="' + (i === currentGuide) + '">' +
+        esc(g.stem) + "</button>";
+    }).join("");
+  }
+  function renderGuide() {
+    var g = GUIDES[currentGuide];
+    if (!g) return;
+    document.getElementById("src-title").textContent = g.stem + ".md";
+    document.getElementById("src-meta").textContent = g.language + " · " + g.from + " → " + g.to;
+    document.getElementById("src").innerHTML = esc(g.text);
+
+    var meta = RUNS.map(function (r) {
+      return g.runs[r] ? r + " " + g.runs[r].changes.length : r + " –";
+    }).join("  ·  ");
+    document.getElementById("chg-meta").textContent = meta;
+
+    var html = RUNS.map(function (r) {
+      var run = g.runs[r];
+      if (!run) return "";
+      return run.changes.map(function (c) { return changeCard(c, r); }).join("");
+    }).join("");
+    document.getElementById("changes").innerHTML = html ||
+      '<div class="empty">No changes extracted.</div>';
+  }
+  function changeCard(c, runName) {
+    var ba = "";
+    if (c.before && c.after) {
+      ba = '<div class="ba">' +
+        '<div><div class="tag">before</div><pre>' + esc(c.before) + "</pre></div>" +
+        '<div><div class="tag">after</div><pre class="after">' + esc(c.after) + "</pre></div>" +
+        "</div>";
+    }
+    return '<div class="chg"><div class="chg-head">' +
+      '<span class="chip run-chip">' + esc(runName) + "</span>" +
+      '<span class="chip k-' + esc(c.kind) + '">' + esc(c.kind) + "</span>" +
+      '<span class="chg-label">' + esc(c.label || c.leaf || "—") + "</span>" +
+      (c.grounded ? "" : '<span class="chip k-endpoint_removed">ungrounded</span>') +
+      "</div>" +
+      (c.note ? '<div class="chg-note">' + esc(c.note) + "</div>" : "") + ba + "</div>";
+  }
+
+  /* ---------------- adjudicate ------------------------------------------ */
+  function contested() {
+    var out = [];
+    GUIDES.forEach(function (g) {
+      g.agreement.forEach(function (a) {
+        if (a.contested) out.push({ guide: g, leaf: a.leaf, foundBy: a.found_by });
+      });
+    });
+    return out;
+  }
+  function contextFor(g, leaf) {
+    var lines = g.text.split("\n"), hits = [];
+    for (var i = 0; i < lines.length && hits.length < 3; i++) {
+      if (lines[i].indexOf(leaf) !== -1) hits.push({ n: i + 1, text: lines[i] });
+    }
+    if (!hits.length) return '<div class="ctx none">This identifier does not appear ' +
+      'literally anywhere in the guide.</div>';
+    return '<div class="ctx">' + hits.map(function (h) {
+      var safe = esc(h.text.trim());
+      var re = new RegExp(leaf.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g");
+      return '<span class="ln">' + h.n + "</span>  " + safe.replace(re, "<mark>" + esc(leaf) + "</mark>");
+    }).join("\n") + "</div>";
+  }
+  function renderQueue() {
+    var items = contested();
+    var done = items.filter(function (it) { return verdicts[key(it.guide.stem, it.leaf)]; }).length;
+    document.getElementById("adj-count").textContent = done + " of " + items.length + " judged";
+    document.getElementById("adj-bar").style.width =
+      (items.length ? (done / items.length * 100) : 0) + "%";
+
+    document.getElementById("queue").innerHTML = items.map(function (it) {
+      var k = key(it.guide.stem, it.leaf);
+      var v = verdicts[k] || null;
+      var chips = RUNS.map(function (r) {
+        var on = it.foundBy.indexOf(r) !== -1;
+        return '<span class="chip run-chip' + (on ? "" : " off") + '">' + esc(r) +
+          (on ? "" : " ✕") + "</span>";
+      }).join(" ");
+      return '<div class="card' + (v ? " done" : "") + '" data-k="' + esc(k) + '">' +
+        '<div class="card-top"><span class="leaf">' + esc(it.leaf) + "</span>" + chips +
+        '<span class="where">' + esc(it.guide.stem) + "</span></div>" +
+        contextFor(it.guide, it.leaf) +
+        '<div class="verdicts">' +
+        vbtn(k, "real", "yes", "In the guide — others missed it", v) +
+        vbtn(k, "overread", "no", "Not in the guide — over-read", v) +
+        vbtn(k, "unsure", "skip", "Unsure", v) +
+        "</div></div>";
+    }).join("") || '<div class="empty">Every run agreed on every identifier.</div>';
+  }
+  function vbtn(k, value, cls, label, current) {
+    return '<button class="' + cls + '" data-k="' + esc(k) + '" data-v="' + value +
+      '" aria-pressed="' + (current === value) + '">' + esc(label) + "</button>";
+  }
+
+  function renderRecall() {
+    var items = contested();
+    var real = {}, judged = 0;
+    items.forEach(function (it) {
+      var v = verdicts[key(it.guide.stem, it.leaf)];
+      if (!v || v === "unsure") return;
+      judged++;
+      if (v === "real") real[key(it.guide.stem, it.leaf)] = it.foundBy;
+    });
+    var realCount = Object.keys(real).length;
+
+    var board = document.getElementById("recall-board");
+    if (!judged) {
+      board.innerHTML = card("recall", "—",
+        "judge some identifiers and per-run recall appears here");
+      return;
+    }
+    // Agreed identifiers are real by construction; contested ones need a verdict.
+    var agreedAll = GUIDES.reduce(function (n, g) {
+      return n + g.agreement.filter(function (a) { return !a.contested; }).length;
+    }, 0);
+    board.innerHTML = RUNS.map(function (r) {
+      var found = agreedAll;
+      Object.keys(real).forEach(function (k) {
+        if (real[k].indexOf(r) !== -1) found++;
+      });
+      var truth = agreedAll + realCount;
+      var pct = truth ? Math.round(found / truth * 100) : 0;
+      return card(r + " recall", pct + "%", found + " of " + truth + " confirmed");
+    }).join("") + card("judged", judged + " / " + items.length, realCount + " confirmed real");
+  }
+
+  /* ---------------- wiring ---------------------------------------------- */
+  function selectTab(id) {
+    [["t-overview", "p-overview"], ["t-guides", "p-guides"], ["t-adj", "p-adj"]]
+      .forEach(function (pair) {
+        var on = pair[0] === id;
+        document.getElementById(pair[0]).setAttribute("aria-selected", String(on));
+        document.getElementById(pair[1]).hidden = !on;
+      });
+  }
+  document.querySelector("nav.tabs").addEventListener("click", function (e) {
+    var b = e.target.closest("button[role=tab]");
+    if (b) selectTab(b.id);
+  });
+  document.getElementById("guide-picker").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-i]");
+    if (!b) return;
+    currentGuide = Number(b.dataset.i);
+    renderPicker();
+    renderGuide();
+  });
+  document.getElementById("queue").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-v]");
+    if (!b) return;
+    var k = b.dataset.k, v = b.dataset.v;
+    var parts = k.split("__");
+    var leaf = parts.slice(1).join("__");
+    saveVerdict(parts[0], leaf, verdicts[k] === v ? null : v);
+  });
+
+  localLoad();
+  renderOverview();
+  renderPicker();
+  renderGuide();
+  renderQueue();
+  renderRecall();
+  setStore();
+  connectDb();
+})();
+</script>
