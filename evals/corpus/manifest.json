@@ -1,0 +1,85 @@
+{
+  "note": "Ten real, published migration guides. Copied verbatim from the SDK repositories named below so the corpus is reproducible and the grounding check has an exact source to match against. Twilio publishes one UPGRADE.md covering every major version; the window named here selects the section with actual breaking changes.",
+  "guides": [
+    {
+      "file": "shopify-ruby-v16.md",
+      "provider": "shopify-ruby",
+      "language": "ruby",
+      "from": "15",
+      "to": "16",
+      "source": "Shopify/shopify-api-ruby BREAKING_CHANGES_FOR_V16.md"
+    },
+    {
+      "file": "shopify-ruby-v15.md",
+      "provider": "shopify-ruby",
+      "language": "ruby",
+      "from": "14",
+      "to": "15",
+      "source": "Shopify/shopify-api-ruby BREAKING_CHANGES_FOR_V15.md"
+    },
+    {
+      "file": "shopify-ruby-v10.md",
+      "provider": "shopify-ruby",
+      "language": "ruby",
+      "from": "9",
+      "to": "10",
+      "source": "Shopify/shopify-api-ruby BREAKING_CHANGES_FOR_V10.md"
+    },
+    {
+      "file": "shopify-ruby-older.md",
+      "provider": "shopify-ruby",
+      "language": "ruby",
+      "from": "8",
+      "to": "9",
+      "source": "Shopify/shopify-api-ruby BREAKING_CHANGES_FOR_OLDER_VERSIONS.md"
+    },
+    {
+      "file": "shopify-js-v8.md",
+      "provider": "shopify-api-js",
+      "language": "typescript",
+      "from": "7",
+      "to": "8",
+      "source": "Shopify/shopify-app-js docs/migrating-to-v8.md"
+    },
+    {
+      "file": "shopify-js-v10.md",
+      "provider": "shopify-api-js",
+      "language": "typescript",
+      "from": "9",
+      "to": "10",
+      "source": "Shopify/shopify-app-js docs/migrating-to-v10.md"
+    },
+    {
+      "file": "shopify-js-v11.md",
+      "provider": "shopify-api-js",
+      "language": "typescript",
+      "from": "10",
+      "to": "11",
+      "source": "Shopify/shopify-app-js docs/migrating-to-v11.md"
+    },
+    {
+      "file": "shopify-js-v13.md",
+      "provider": "shopify-api-js",
+      "language": "typescript",
+      "from": "12",
+      "to": "13",
+      "source": "Shopify/shopify-app-js docs/migrating-to-v13.md"
+    },
+    {
+      "file": "twilio-python-upgrade.md",
+      "provider": "twilio-python",
+      "language": "python",
+      "from": "7",
+      "to": "8",
+      "source": "twilio/twilio-python UPGRADE.md"
+    },
+    {
+      "file": "twilio-node-upgrade.md",
+      "provider": "twilio-node",
+      "language": "typescript",
+      "from": "3",
+      "to": "4",
+      "source": "twilio/twilio-node UPGRADE.md"
+    }
+  ]
+}

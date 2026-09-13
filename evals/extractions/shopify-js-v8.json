@@ -1,0 +1,43 @@
+{
+  "id": "shopify-api-js-7-8",
+  "provider": "shopify-api-js",
+  "from": "7",
+  "to": "8",
+  "severity": "breaking",
+  "effective": null,
+  "changes": [
+    {
+      "kind": "semantics_changed",
+      "op": "node",
+      "note": "Support for Node 14 removed; Node 14 reached EOL in February 2023. Upgrade to at least Node 16 before upgrading this package."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "shopify.clients.Storefront",
+      "language": "typescript",
+      "before": "const storefrontClient = new shopify.clients.Storefront({\n    domain: session.shop,\n    storefrontAccessToken,\n    apiVersion: ApiVersion.January23,\n  });",
+      "after": "const client = new shopify.clients.Storefront({\n    session,\n    apiVersion: ApiVersion.January23,\n  });",
+      "note": "The domain and storefrontAccessToken fields are deprecated in favour of the same session other clients use."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "Shopify",
+      "language": "typescript",
+      "before": "const myVariable: Shopify<typeof restResources>;",
+      "after": "const myVariable: Shopify<ConfigParams, typeof restResources>;",
+      "note": "The Shopify type now receives the config as its first generic and infers restResources from it."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "privateMetafieldNamespaces",
+      "replacement": null,
+      "note": "Removed support for the privateMetafieldNamespaces field in webhooks."
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "adminApiAccessToken",
+      "note": "When calling shopifyApi, adminApiAccessToken is now mandatory when isCustomStoreApp is true. It has logged an error since v7.1.0 and now throws."
+    }
+  ],
+  "vectors": []
+}

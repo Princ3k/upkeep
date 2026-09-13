@@ -1,0 +1,42 @@
+{
+  "id": "shopify-api-js-9-10",
+  "provider": "shopify-api-js",
+  "from": "9",
+  "to": "10",
+  "severity": "breaking",
+  "effective": null,
+  "changes": [
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "shopify.config.scopes",
+      "language": "typescript",
+      "before": "const scopes = shopify.config.scopes.toString();",
+      "after": "const scopes = shopify.config.scopes ? shopify.config.scopes.toString() : '';",
+      "note": "scopes on the config object is now optional, so direct access must handle its absence."
+    },
+    {
+      "kind": "field_renamed",
+      "path": "v10_lineItemBilling",
+      "to": "lineItemBilling",
+      "inferred": false,
+      "pending": false
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "WebhookValidationErrorReason.MissingHeaders",
+      "language": "typescript",
+      "before": "check.reason === WebhookValidationErrorReason.MissingHeaders &&",
+      "after": "if (!check.valid && check.reason === WebhookValidationErrorReason.MissingHmac) {",
+      "note": "A missing HMAC header now reports MissingHmac rather than MissingHeaders."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "@shopify/shopify-api/lib",
+      "language": "typescript",
+      "before": "import 'node_modules/@shopify/shopify-api/lib/clients/admin/graphql/client';",
+      "after": "import 'node_modules/@shopify/shopify-api/dist/esm/lib/clients/admin/graphql/client';",
+      "note": "Internal build paths changed to introduce ESM and CJS exports. Regular package imports are unchanged."
+    }
+  ],
+  "vectors": []
+}

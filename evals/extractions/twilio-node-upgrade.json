@@ -1,0 +1,133 @@
+{
+  "id": "twilio-node-3-4",
+  "provider": "twilio-node",
+  "from": "3",
+  "to": "4",
+  "severity": "breaking",
+  "effective": null,
+  "changes": [
+    {
+      "kind": "semantics_changed",
+      "op": "node",
+      "note": "Supported Node.js versions updated: upgrade to Node.js >= 14, dropped support for Node.js < 14."
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "lazy loading",
+      "note": "Required Twilio modules now lazy load by default."
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "subresourceUris",
+      "note": "Certain response properties now use the Record type with string keys, including subresourceUris for v2010 APIs and links for non-v2010 APIs."
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "AccessToken",
+      "note": "Creating an AccessToken requires an identity in the options."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "IpMessagingGrant",
+      "replacement": null,
+      "note": "Removed."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ConversationsGrant",
+      "replacement": "VoiceGrant",
+      "note": "Deprecated in favor of VoiceGrant."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Refer.referSip()",
+      "replacement": "Refer.sip()",
+      "note": "TwiML function deprecation."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssmlBreak()",
+      "replacement": "Say.break()",
+      "note": "TwiML function deprecation."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssmlEmphasis()",
+      "replacement": "Say.emphasis()",
+      "note": "TwiML function deprecation."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssmlLang()",
+      "replacement": "Say.lang()",
+      "note": "TwiML function deprecation."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssmlP()",
+      "replacement": "Say.p()",
+      "note": "TwiML function deprecation."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssmlPhoneme()",
+      "replacement": "Say.phoneme()",
+      "note": "TwiML function deprecation."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssmlProsody()",
+      "replacement": "Say.prosody()",
+      "note": "TwiML function deprecation."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssmlS()",
+      "replacement": "Say.s()",
+      "note": "TwiML function deprecation."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssmlSayAs()",
+      "replacement": "Say.sayAs()",
+      "note": "TwiML function deprecation."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssmlSub()",
+      "replacement": "Say.sub()",
+      "note": "TwiML function deprecation."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssmlW()",
+      "replacement": "Say.w()",
+      "note": "TwiML function deprecation."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "Say.ssmlEmphasis",
+      "language": "typescript",
+      "before": "say.ssmlEmphasis(\"you\");",
+      "after": "say.emphasis(\"you\");",
+      "note": "The guide shows this one rewrite as the worked example for the whole Say.ssml* family."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "workers.cumulativeStatistics",
+      "language": "typescript",
+      "before": "client.taskrouter.v1.workspaces('WS...').workers('WK...).cumulativeStatistics()",
+      "after": "client.taskrouter.v1.workspaces('WS...').workers.cumulativeStatistics()",
+      "note": "Cumulative Workers Statistics no longer accepts a WorkerSid."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "workers.realTimeStatistics",
+      "language": "typescript",
+      "before": "client.taskrouter.v1.workspaces('WS...').workers('WK...).realTimeStatistics()",
+      "after": "client.taskrouter.v1.workspaces('WS...').workers.realTimeStatistics()",
+      "note": "Real-Time Workers Statistics no longer accepts a WorkerSid."
+    }
+  ],
+  "vectors": []
+}

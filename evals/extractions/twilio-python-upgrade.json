@@ -1,0 +1,125 @@
+{
+  "id": "twilio-python-7-8",
+  "provider": "twilio-python",
+  "from": "7",
+  "to": "8",
+  "severity": "breaking",
+  "effective": null,
+  "changes": [
+    {
+      "kind": "semantics_changed",
+      "op": "python",
+      "note": "Dropped support for Python 3.6; Python 3.7 is the new required minimum version."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Refer.refer_sip()",
+      "replacement": "Refer.sip()",
+      "note": "Deprecated TwiML Voice method deleted."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssml_break()",
+      "replacement": "Say.break_()",
+      "note": "Deprecated TwiML Voice method deleted."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssml_emphasis()",
+      "replacement": "Say.emphasis()",
+      "note": "Deprecated TwiML Voice method deleted."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssml_lang()",
+      "replacement": "Say.lang()",
+      "note": "Deprecated TwiML Voice method deleted."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssml_p()",
+      "replacement": "Say.p()",
+      "note": "Deprecated TwiML Voice method deleted."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssml_phoneme()",
+      "replacement": "Say.phoneme()",
+      "note": "Deprecated TwiML Voice method deleted."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssml_prosody()",
+      "replacement": "Say.prosody()",
+      "note": "Deprecated TwiML Voice method deleted."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssml_s()",
+      "replacement": "Say.s()",
+      "note": "Deprecated TwiML Voice method deleted."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssml_say_as()",
+      "replacement": "Say.say_as()",
+      "note": "Deprecated TwiML Voice method deleted."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssml_sub()",
+      "replacement": "Say.sub()",
+      "note": "Deprecated TwiML Voice method deleted."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssml_w()",
+      "replacement": "Say.w()",
+      "note": "Deprecated TwiML Voice method deleted."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "Say.ssml_emphasis",
+      "language": "python",
+      "before": "say.ssml_emphasis(\"you\")",
+      "after": "say.emphasis(\"you\")",
+      "note": "The guide shows this one rewrite as the worked example for the whole Say.ssml_* family."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "IpMessagingGrant",
+      "replacement": null,
+      "note": "Removed in the JWT token building deprecations."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ConversationsGrant",
+      "replacement": "VoiceGrant",
+      "note": "Deprecated in favor of VoiceGrant."
+    },
+    {
+      "kind": "field_renamed",
+      "path": "twilio.rest.api.v2010.account.available_phone_number",
+      "to": "twilio.rest.api.v2010.account.available_phone_number_country",
+      "inferred": false,
+      "pending": false
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "workers.cumulative_statistics",
+      "language": "python",
+      "before": "client.taskrouter.v1.workspaces('WS...').workers('WK...).cumulative_statistics()",
+      "after": "client.taskrouter.v1.workspaces('WS...').workers.cumulative_statistics()",
+      "note": "Cumulative Workers Statistics no longer accepts a WorkerSid."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "workers.real_time_statistics",
+      "language": "python",
+      "before": "client.taskrouter.v1.workspaces('WS...').workers('WK...).real_time_statistics()",
+      "after": "client.taskrouter.v1.workspaces('WS...').workers.real_time_statistics()",
+      "note": "Real-Time Workers Statistics no longer accepts a WorkerSid."
+    }
+  ],
+  "vectors": []
+}

@@ -1,0 +1,23 @@
+{
+  "id": "shopify-ruby-9-10",
+  "provider": "shopify-ruby",
+  "from": "9",
+  "to": "10",
+  "severity": "breaking",
+  "effective": null,
+  "changes": [
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::Base",
+      "replacement": null,
+      "note": "The class used to configure API request settings has been removed; configuration moves to ShopifyAPI::Context.setup."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::Base.activate_session",
+      "replacement": null,
+      "note": "Sessions are no longer activated globally; pass a ShopifyAPI::Auth::Session to each client instead."
+    }
+  ],
+  "vectors": []
+}

@@ -1,0 +1,39 @@
+{
+  "id": "shopify-ruby-14-15",
+  "provider": "shopify-ruby",
+  "from": "14",
+  "to": "15",
+  "severity": "breaking",
+  "effective": null,
+  "changes": [
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "ShopifyAPI::Clients::Graphql::Storefront.new",
+      "language": "ruby",
+      "before": "client = ShopifyAPI::Clients::Graphql::Storefront.new(shop_url, storefront_access_token)",
+      "after": "client = ShopifyAPI::Clients::Graphql::Storefront.new(shop_url, private_token: storefront_private_access_token)",
+      "note": "The public Storefront access token is no longer accepted as a positional parameter; use the named private_token: or public_token: instead."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::LATEST_SUPPORTED_ADMIN_VERSION",
+      "replacement": null,
+      "note": "Removed to prevent semver breaking changes; specify the API version explicitly as a string."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::RELEASE_CANDIDATE_ADMIN_VERSION",
+      "replacement": null,
+      "note": "Removed to prevent semver breaking changes; specify the API version explicitly as a string."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "ShopifyAPI::Webhooks::Handler",
+      "language": "ruby",
+      "before": "include ShopifyAPI::Webhooks::Handler",
+      "after": "extend ShopifyAPI::Webhooks::WebhookHandler",
+      "note": "Handler was removed in favour of WebhookHandler, whose handle method takes a single data: parameter rather than topic:, shop: and body:."
+    }
+  ],
+  "vectors": []
+}

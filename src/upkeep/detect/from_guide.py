@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import anthropic
 
+from upkeep.detect.grounding import GroundingReport, drop_ungrounded
 from upkeep.models import MigrationSpec
 
 MODEL = "claude-opus-5"
@@ -78,11 +79,17 @@ def spec_from_guide(
     vectors: list[str] | None = None,
     client: anthropic.Anthropic | None = None,
     model: str = MODEL,
-) -> MigrationSpec:
+) -> tuple[MigrationSpec, GroundingReport]:
     """Extract a MigrationSpec from a written migration guide.
 
     The result is validated against the same schema a spec diff produces, so
     everything downstream — index, plan, patch, verify — is unchanged.
+
+    Every change is then checked back against the guide text, and anything whose
+    symbol or code cannot be found there is dropped before returning. An invented
+    `after` is the one failure that would have something downstream rewrite real
+    source from a document that never said it. The report comes back alongside
+    the spec so a caller can see what was discarded.
     """
     client = client or anthropic.Anthropic()
 
@@ -106,7 +113,7 @@ def spec_from_guide(
 
     spec = response.parsed_output
     # The caller owns identity and provenance; the model only reads the prose.
-    return spec.model_copy(
+    spec = spec.model_copy(
         update={
             "id": f"{provider}-{from_version}-{to_version}",
             "provider": provider,
@@ -121,3 +128,4 @@ def spec_from_guide(
             ],
         }
     )
+    return drop_ungrounded(spec, guide_text)

@@ -1,0 +1,75 @@
+{
+  "id": "shopify-api-js-12-13",
+  "provider": "shopify-api-js",
+  "from": "12",
+  "to": "13",
+  "severity": "breaking",
+  "effective": null,
+  "changes": [
+    {
+      "kind": "symbol_removed",
+      "symbol": "ApiVersion.October22",
+      "replacement": null,
+      "note": "API version removed; it falls outside Shopify's rolling API support window."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ApiVersion.January23",
+      "replacement": null,
+      "note": "API version removed; it falls outside Shopify's rolling API support window."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ApiVersion.April23",
+      "replacement": null,
+      "note": "API version removed; it falls outside Shopify's rolling API support window."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ApiVersion.July23",
+      "replacement": null,
+      "note": "API version removed; it falls outside Shopify's rolling API support window."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ApiVersion.October23",
+      "replacement": null,
+      "note": "API version removed; it falls outside Shopify's rolling API support window."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ApiVersion.January24",
+      "replacement": null,
+      "note": "API version removed; it falls outside Shopify's rolling API support window."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ApiVersion.April24",
+      "replacement": null,
+      "note": "API version removed; it falls outside Shopify's rolling API support window."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ApiVersion.July24",
+      "replacement": null,
+      "note": "API version removed; it falls outside Shopify's rolling API support window."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "apiVersion",
+      "language": "typescript",
+      "before": "  apiVersion: ApiVersion.April23,",
+      "after": "  apiVersion: ApiVersion.January26,",
+      "note": "Apps configured with a removed version must move to a supported one."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "restResources",
+      "language": "typescript",
+      "before": "import {restResources} from '@shopify/shopify-api/rest/admin/2023-04';",
+      "after": "import {restResources} from '@shopify/shopify-api/rest/admin/2026-01';",
+      "note": "REST resource directories for the removed versions were deleted; the import path must match the configured apiVersion."
+    }
+  ],
+  "vectors": []
+}

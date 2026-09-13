@@ -1,0 +1,16 @@
+{
+  "id": "shopify-api-js-10-11",
+  "provider": "shopify-api-js",
+  "from": "10",
+  "to": "11",
+  "severity": "breaking",
+  "effective": null,
+  "changes": [
+    {
+      "kind": "semantics_changed",
+      "op": "node",
+      "note": "Support for Node 16 removed. The guide lists no other change."
+    }
+  ],
+  "vectors": []
+}

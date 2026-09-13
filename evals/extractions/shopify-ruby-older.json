@@ -1,0 +1,75 @@
+{
+  "id": "shopify-ruby-7-8",
+  "provider": "shopify-ruby",
+  "from": "7",
+  "to": "8",
+  "severity": "breaking",
+  "effective": null,
+  "changes": [
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::ApiVersion::Unstable",
+      "replacement": null,
+      "note": "Removed in version 8.0.0."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::ApiVersion::Release",
+      "replacement": null,
+      "note": "Removed in version 8.0.0."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::ApiVersion.define_version",
+      "replacement": null,
+      "note": "Removed in version 8.0.0."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": ".coerce_to_version",
+      "replacement": ".find_version",
+      "note": "Deprecated on ApiVersion; use .find_version."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": ".define_known_versions",
+      "replacement": ".fetch_known_versions",
+      "note": "Deprecated on ApiVersion; use .fetch_known_versions."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": ".clear_defined_versions",
+      "replacement": ".clear_known_versions",
+      "note": "Deprecated on ApiVersion; use .clear_known_versions."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "#name",
+      "replacement": "#handle",
+      "note": "Deprecated on ApiVersion; use #handle."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "#stable?",
+      "replacement": "#supported?",
+      "note": "Deprecated on ApiVersion; use #supported?."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "ShopifyAPI::Session.new",
+      "language": "ruby",
+      "before": "ShopifyAPI::Session.new(domain, token, extras)",
+      "after": "ShopifyAPI::Session.new(domain: domain, token: token, api_version: api_version, extras: extras)",
+      "note": "api_version is now required and the constructor takes keyword arguments."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "self.prefix",
+      "language": "ruby",
+      "before": "self.prefix = '/admin/shop/'",
+      "after": "self.resource_prefix = 'shop/'",
+      "note": "self.prefix= is deprecated in favour of self.resource_prefix=, which must not include /admin."
+    }
+  ],
+  "vectors": []
+}
