@@ -8,29 +8,29 @@
   "changes": [
     {
       "kind": "semantics_changed",
-      "op": "Node runtime",
-      "note": "Support for Node 14 has been removed. You'll need to upgrade to at least Node 16 before you can upgrade this package."
+      "op": "Node version",
+      "note": "If you're running on Node 14, you'll need to upgrade to at least Node 16 before you can upgrade this package."
     },
     {
       "kind": "call_pattern_changed",
       "symbol": "shopify.clients.Storefront",
-      "language": "ts",
+      "language": "typescript",
       "before": "app.get('/my-endpoint', async (req, res) => {\n  const sessionId = await shopify.session.getCurrentId({\n    isOnline: true,\n    rawRequest: req,\n    rawResponse: res,\n  });\n\n  // use sessionId to retrieve session from app's session storage\n  // getSessionFromStorage() must be provided by application\n  const session = await getSessionFromStorage(sessionId);\n\n  const adminApiClient = new shopify.clients.Rest({session});\n  const storefrontTokenResponse = await adminApiClient.post({\n    path: 'storefront_access_tokens',\n    data: {\n      storefront_access_token: {\n        title: 'This is my test access token',\n      },\n    },\n  });\n\n  const storefrontAccessToken =\n    storefrontTokenResponse.body.storefront_access_token.access_token;\n\n  // For simplicity, this example creates a token every time it's called, but that is not ideal.\n  // You can fetch existing Storefront access tokens using the Admin API client.\n  const storefrontClient = new shopify.clients.Storefront({\n    domain: session.shop,\n    storefrontAccessToken,\n    apiVersion: ApiVersion.January23,\n  });\n});",
       "after": "app.get('/my-endpoint', async (req, res) => {\n  const sessionId = await shopify.session.getCurrentId({\n    isOnline: true,\n    rawRequest: req,\n    rawResponse: res,\n  });\n\n  // use sessionId to retrieve session from app's session storage\n  // getSessionFromStorage() must be provided by the application\n  const session = await getSessionFromStorage(sessionId);\n\n  const client = new shopify.clients.Storefront({\n    session,\n    apiVersion: ApiVersion.January23,\n  });\n});",
-      "note": "Deprecating the `domain` and `storefrontAccessToken` fields when creating a Storefront client, in favour of using `session`."
+      "note": "Deprecating the domain and storefrontAccessToken fields when creating a Storefront client, in favour of using the same session other clients use."
     },
     {
       "kind": "call_pattern_changed",
       "symbol": "Shopify",
-      "language": "ts",
+      "language": "typescript",
       "before": "import {restResources} from '@shopify/shopify-api/rest/admin/2023-10';\n\nconst myVariable: Shopify<typeof restResources>;",
       "after": "import {\n  restResources,\n  ConfigParams,\n} from '@shopify/shopify-api/rest/admin/2023-10';\n\nconst myVariable: Shopify<ConfigParams, typeof restResources>;",
-      "note": "The Shopify type was changed to receive the config as a generic type. If an app needed to explicitly use the Shopify type anywhere and set the resources generic, it'll need to pass in the ConfigParams type as the first generic."
+      "note": "If an app needed to explicitly use the Shopify type anywhere and set the resources generic, it'll need to pass in the ConfigParams type as the first generic."
     },
     {
       "kind": "semantics_changed",
       "op": "Supported API versions",
-      "note": "This library no longer supports API versions 2022-04 and 2022-07."
+      "note": "This library no longer supports versions 2022-04 and 2022-07."
     },
     {
       "kind": "symbol_removed",

@@ -8,28 +8,29 @@
   "changes": [
     {
       "kind": "semantics_changed",
-      "op": "Node.js versions",
-      "note": "Upgrade to Node.js >= 14. Dropped support for Node.js < 14. Added support for Node.js 18."
+      "op": "Node.js version",
+      "note": "Dropped support for Node.js < 14 and added support for Node.js 18. Upgrade to Node.js >= 14."
     },
     {
       "kind": "semantics_changed",
       "op": "Module loading",
-      "note": "Required Twilio modules now lazy load by default"
+      "note": "Required Twilio modules now lazy load by default."
     },
     {
       "kind": "semantics_changed",
-      "op": "Response property types",
-      "note": "Certain response properties now use the Record type with string keys, including the subresourceUris property for v2010 APIs and the links properties for non-v2010 APIs"
+      "op": "Response properties",
+      "note": "Certain response properties now use the Record type with string keys, including the subresourceUris property for v2010 APIs and the links properties for non-v2010 APIs."
     },
     {
       "kind": "param_required_added",
-      "op": "AccessToken",
+      "op": "Creating an AccessToken",
       "param": "identity",
       "safe_default": null
     },
     {
-      "kind": "semantics_changed",
-      "op": "ConversationsGrant",
+      "kind": "symbol_removed",
+      "symbol": "ConversationsGrant",
+      "replacement": "VoiceGrant",
       "note": "ConversationsGrant has been deprecated in favor of VoiceGrant"
     },
     {
@@ -55,6 +56,14 @@
       "symbol": "Say.break_()",
       "replacement": "Say.break()",
       "note": ""
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": null,
+      "language": "typescript",
+      "before": "const response = new VoiceResponse();\nconst say = response.say(\"Hello\");\nsay.ssmlEmphasis(\"you\");",
+      "after": "const response = new VoiceResponse();\nconst say = response.say(\"Hello\");\nsay.emphasis(\"you\");",
+      "note": "Say.ssmlEmphasis() replaced by Say.emphasis()"
     },
     {
       "kind": "symbol_removed",
@@ -103,6 +112,22 @@
       "symbol": "Say.ssmlW()",
       "replacement": "Say.w()",
       "note": ""
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": null,
+      "language": "typescript",
+      "before": "client.taskrouter.v1.workspaces('WS...').workers('WK...).cumulativeStatistics()",
+      "after": "client.taskrouter.v1.workspaces('WS...').workers.cumulativeStatistics()",
+      "note": "Cumulative and Real-Time Workers Statistics no longer accept a WorkerSid"
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": null,
+      "language": "typescript",
+      "before": "client.taskrouter.v1.workspaces('WS...').workers('WK...).realTimeStatistics()",
+      "after": "client.taskrouter.v1.workspaces('WS...').workers.realTimeStatistics()",
+      "note": "Cumulative and Real-Time Workers Statistics no longer accept a WorkerSid"
     }
   ],
   "vectors": []

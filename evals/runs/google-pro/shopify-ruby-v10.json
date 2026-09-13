@@ -10,35 +10,52 @@
       "kind": "symbol_removed",
       "symbol": "ShopifyAPI::Base",
       "replacement": null,
-      "note": "ShopifyAPI::Base class has been removed."
-    },
-    {
-      "kind": "symbol_removed",
-      "symbol": "ShopifyAPI::Base.api_version",
-      "replacement": "ShopifyAPI::Context.setup",
-      "note": "API request version previously set by ShopifyAPI::Base.api_version, now configured in ShopifyAPI::Context.setup."
-    },
-    {
-      "kind": "symbol_removed",
-      "symbol": "ShopifyAPI::Base.header",
-      "replacement": "ShopifyAPI::Clients::HttpRequest",
-      "note": "Previously used to set User-Agent and custom headers. Now configured via ShopifyAPI::Context.setup and ShopifyAPI::Clients::HttpRequest."
+      "note": "ShopifyAPI::Base class has been removed. Use ShopifyAPI::Context.setup for configuration."
     },
     {
       "kind": "symbol_removed",
       "symbol": "ShopifyAPI::Base.activate_session",
       "replacement": "ShopifyAPI::Context.activate_session",
-      "note": ""
+      "note": "You can no longer activate session using ShopifyAPI::Base.activate_session."
     },
     {
       "kind": "semantics_changed",
-      "op": "Dependencies",
-      "note": "Deprecated the dependency of graphql-client and ActiveResource gems. REST and GraphQL requests must be refactored to use the new client classes."
+      "op": "GraphQL client",
+      "note": "We deprecated the dependency of graphql-client gem. You must refactor your existing query and response parsing to use our new GraphQL HTTP Client classes."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": null,
+      "language": "ruby",
+      "before": "ShopifyAPI::Base.api_version = \"2023-04\"\nclient = ShopifyAPI::GraphQL.client\n\nSHOP_NAME_QUERY = client.parse <<-'GRAPHQL'\n  {\n    shop {\n      name\n    }\n  }\nGRAPHQL\n\nresult = client.query(SHOP_NAME_QUERY)\nshop_name = result.data.shop.name",
+      "after": "client = ShopifyAPI::Clients::Graphql::Admin.new(session: session, api_version: \"2023-04\")\n# session must be an instance of ShopifyAPI::Auth::Session, see Section - [2. Session Changes]\n\nSHOP_NAME_QUERY =<<~QUERY\n  {\n    shop {\n      name\n    }\n  }\nQUERY\n\nresponse = client.query(query: query)\nshop_name = response.body[\"data\"][\"shop\"][\"name\"]",
+      "note": "Refactoring existing query and response parsing to use new GraphQL HTTP Client."
     },
     {
       "kind": "semantics_changed",
-      "op": "Resource connections",
-      "note": "Helper methods to load related resource connections (like order.transactions) are no longer supported unless the connected property is explicitly listed in the REST API."
+      "op": "REST resources",
+      "note": "The use of ActiveResource has been deprecated, REST API requests must now be refactored to use the new format that better represents our REST API schema."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": null,
+      "language": "ruby",
+      "before": "Order.find(:all, params: {financial_status: \"partially_paid\"})",
+      "after": "Order.all(financial_status: \"partially_paid\")",
+      "note": "Find partially paid orders"
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": null,
+      "language": "ruby",
+      "before": "Order.find(<id>)",
+      "after": "Order.find(id: <id>)",
+      "note": "Find order by ID <id>"
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "REST Resource connections",
+      "note": "Previously we added helper methods to load related resource connections like orders.transactions. After the upgrade, only connected properties listed in the REST API will be supported."
     }
   ],
   "vectors": []

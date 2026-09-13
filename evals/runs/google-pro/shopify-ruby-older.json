@@ -25,51 +25,77 @@
       "note": ""
     },
     {
-      "kind": "semantics_changed",
-      "op": "ShopifyAPI::ApiVersion.coerce_to_version",
-      "note": ".coerce_to_version deprecated. use .find_version"
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::ApiVersion.coerce_to_version",
+      "replacement": ".find_version",
+      "note": ""
     },
     {
-      "kind": "semantics_changed",
-      "op": "ShopifyAPI::ApiVersion.define_known_versions",
-      "note": ".define_known_versions deprecated. Use .fetch_known_versions"
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::ApiVersion.define_known_versions",
+      "replacement": ".fetch_known_versions",
+      "note": ""
     },
     {
-      "kind": "semantics_changed",
-      "op": "ShopifyAPI::ApiVersion.clear_defined_versions",
-      "note": ".clear_defined_versions deprecated. Use. .clear_known_versions"
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::ApiVersion.clear_defined_versions",
+      "replacement": ".clear_known_versions",
+      "note": ""
     },
     {
-      "kind": "semantics_changed",
-      "op": "ShopifyAPI::ApiVersion.latest_stable_version",
-      "note": ".latest_stable_version deprecated. Use ShopifyAPI::Meta.admin_versions.find(&:latest_supported)"
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::ApiVersion.latest_stable_version",
+      "replacement": "ShopifyAPI::Meta.admin_versions.find(&:latest_supported)",
+      "note": ""
     },
     {
-      "kind": "semantics_changed",
-      "op": "ShopifyAPI::ApiVersion#name",
-      "note": "#name deprecated. Use #handle"
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::ApiVersion#name",
+      "replacement": "#handle",
+      "note": ""
     },
     {
-      "kind": "semantics_changed",
-      "op": "ShopifyAPI::ApiVersion#stable?",
-      "note": "#stable? deprecated. Use #supported?"
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::ApiVersion#stable?",
+      "replacement": "#supported?",
+      "note": ""
     },
     {
       "kind": "semantics_changed",
       "op": "ShopifyAPI::ApiVersion.version_lookup_mode",
-      "note": "Version 8.0.0 introduces a version lookup mode. By default, ShopifyAPI::ApiVersion.version_lookup_mode is :define_on_unknown."
+      "note": "Version 8.0.0 introduces a version lookup mode. By default, ShopifyAPI::ApiVersion.version_lookup_mode is :define_on_unknown. When setting the api_version on Session or Base, the api_version attribute takes a version handle and sets an instance of ShopifyAPI::ApiVersion matching the handle."
     },
     {
-      "kind": "param_required_added",
-      "op": "ShopifyAPI::Session.new",
-      "param": "api_version",
-      "safe_default": null
+      "kind": "call_pattern_changed",
+      "symbol": null,
+      "language": "ruby",
+      "before": "ShopifyAPI::Session.new(domain, token, extras)",
+      "after": "ShopifyAPI::Session.new(domain: domain, token: token, api_version: api_version, extras: extras)",
+      "note": "When creating sessions, api_version is now required and uses keyword arguments."
     },
     {
-      "kind": "param_required_added",
-      "op": "ShopifyAPI::Session.temp",
-      "param": "api_version",
-      "safe_default": null
+      "kind": "call_pattern_changed",
+      "symbol": null,
+      "language": "ruby",
+      "before": "ShopifyAPI::Session.temp(domain, token, extras) do\n  ...\nend",
+      "after": "ShopifyAPI::Session.temp(domain: domain, token: token, api_version: api_version) do\n  ...\nend",
+      "note": ""
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": null,
+      "language": "ruby",
+      "before": "class MyResource < ShopifyAPI::Base\n  self.prefix = '/admin/shop/'\nend",
+      "after": "class MyResource < ShopifyAPI::Base\n  self.resource_prefix = 'shop/'\nend",
+      "note": "The use of self.prefix = has been deprecated; you should now use self.resource = (or self.resource_prefix =) and not include /admin."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": null,
+      "language": "ruby",
+      "before": "def self.current(options={})\n  find(:one, options.merge(from: \"/admin/shop.#{format.extension}\"))\nend",
+      "after": "def self.current(options = {})\n  find(:one, options.merge(\n    from: api_version.construct_api_path(\"shop.#{format.extension}\")\n  ))\nend",
+      "note": "URL construction in find requires using api_version.construct_api_path."
     }
   ],
   "vectors": []

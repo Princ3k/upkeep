@@ -103,34 +103,65 @@ here is reading prose rather than writing patches.
 
 ## The A/B: two real runs
 
-Both arms were produced by `evals/extract.py` against the API, so unlike
-`extractions/` they are machine-made and reproducible. No Anthropic credential
-was available, so this compares two tiers of one provider rather than two
-providers. Both got the identical flat schema.
+Both arms were produced by `evals/extract.py` against the API. No Anthropic
+credential was available, so this compares two tiers of one provider rather than
+two providers. Both got the identical flat schema.
 
 | | hand-made | gemini-3.1-pro | gemini-3-flash |
 | --- | --- | --- | --- |
-| Changes | 88 | 79 | 93 |
-| Grounded | 88/88 | **79/79** | **93/93** |
+| Changes | 88 | 91 | 93 |
+| Grounded | 88/88 | **91/91** | **93/93** |
 | Fabrications | 0 | **0** | **0** |
-| `call_pattern_changed` | 25 | 8 | 18 |
+| `call_pattern_changed` | 25 | 23 | 18 |
 | Tier A (auto-patchable) | **2** | **2** | **2** |
-| Wall clock | — | 4m34s | ~3m |
-| Cost | — | ~$0.30 | ~$0.08 |
 
-**Nothing was fabricated by either model.** Across 172 machine-extracted changes
+**Nothing was fabricated by either model.** Across 184 machine-extracted changes
 from ten real documents, every symbol and every line of quoted code was present
-in its source. That is the result the grounding check exists to produce, and it
-held without a single drop.
+in its source, and nothing was dropped.
 
 **Tier A is 2 in all three runs.** The substantive finding of this whole
 exercise — migration guides are dense with things worth reporting and nearly
 empty of things safe to fix — did not move across three independent extractors.
-That is the number worth trusting here.
 
-**The flash model returned more records than the pro model**, 93 against 79.
-Do not read that as flash being better: the ablation below shows run-to-run
-variance large enough to swallow the whole gap.
+**The two models are indistinguishable here.** 91 against 93 is inside the
+measured run-to-run spread (below), and pro produces slightly *more* call
+patterns than flash. An earlier version of this file claimed flash extracted
+substantially more; that was a measurement error, described next.
+
+### The error that produced the first comparison
+
+The first scored pro run was written at 22:55. The fix that made `symbol`
+optional on `call_pattern_changed` landed at 22:59. The flash run was written at
+23:00.
+
+So pro was scored on pre-fix data and flash on post-fix data. Pro's call
+patterns were being discarded as malformed for an unset field; flash's survived.
+That single confound produced "8 against 18 call patterns", which then produced
+a false model comparison, which then produced a false variance explanation when
+an ablation failed to reproduce it.
+
+The re-run meant to fix this was issued and silently never executed. It was
+"verified" by counting ten files in the output directory — which is exactly what
+a stale directory also looks like. **Counting outputs is not verifying them;
+compare timestamps against the code that produced them.** `evals/score.py` reads
+whatever is on disk and cannot know it is old.
+
+### Variance, measured
+
+Three passes of gemini-3.1-pro over the three most code-dense guides, all
+post-fix:
+
+| guide | totals | call patterns | stdev |
+| --- | --- | --- | --- |
+| shopify-ruby-older | 14, 14, 15 | 4, 4, 4 | 0.58 |
+| shopify-ruby-v10 | 12, 13, 12 | 7, 6, 7 | 0.58 |
+| twilio-python-upgrade | 19, 18, 16 | 3, 3, 3 | 1.53 |
+
+**Variance is small**: at most 3 changes on any guide, and call-pattern counts
+are identical across passes. An earlier claim here that variance swallowed the
+pro/flash gap was wrong — the gap was the confound above. Repeated passes remain
+worth running, because two disagreeing passes would have exposed that confound
+immediately.
 
 ### The number that actually matters: 60%
 
@@ -138,10 +169,9 @@ variance large enough to swallow the whole gap.
 python evals/compare.py runs/google-pro runs/google-flash
 ```
 
-The two runs agree on **60% of the bare identifiers** either one named (49% on
-exact labels, but that penalises writing `Session#serialize` where the other
-wrote `ShopifyAPI::Auth::Session#serialize`). Each run against the hand-made set
-agrees at 56-57%.
+The runs agree on only part of what any of them named — `evals/compare.py`
+prints the exact figure for any two, and the review tool counts the contested
+set at **91 identifiers** across the three runs.
 
 So: three extractors, all perfectly grounded, all fabricating nothing — and any
 two of them disagree about what a document says roughly 40% of the time. **They

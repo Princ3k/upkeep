@@ -7,69 +7,76 @@
   "effective": null,
   "changes": [
     {
+      "kind": "semantics_changed",
+      "op": "Python versions",
+      "note": "Dropped support for Python 3.6. Python 3.7 is the new required minimum version to use twilio-python helper library."
+    },
+    {
       "kind": "symbol_removed",
-      "symbol": "Refer.refer_sip()",
-      "replacement": "Refer.sip()",
+      "symbol": "Refer.refer_sip",
+      "replacement": "Refer.sip",
       "note": ""
     },
     {
       "kind": "symbol_removed",
-      "symbol": "Say.ssml_break()",
-      "replacement": "Say.break_()",
+      "symbol": "Say.ssml_break",
+      "replacement": "Say.break_",
+      "note": ""
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "Say.ssml_emphasis",
+      "language": "python",
+      "before": "from twilio.twiml.voice_response import VoiceResponse\nresp = VoiceResponse()\nsay = resp.say(\"Hello\")\nsay.ssml_emphasis(\"you\")",
+      "after": "from twilio.twiml.voice_response import VoiceResponse\nresp = VoiceResponse()\nsay = resp.say(\"Hello\")\nsay.emphasis(\"you\")",
       "note": ""
     },
     {
       "kind": "symbol_removed",
-      "symbol": "Say.ssml_emphasis()",
-      "replacement": "Say.emphasis()",
+      "symbol": "Say.ssml_lang",
+      "replacement": "Say.lang",
       "note": ""
     },
     {
       "kind": "symbol_removed",
-      "symbol": "Say.ssml_lang()",
-      "replacement": "Say.lang()",
+      "symbol": "Say.ssml_p",
+      "replacement": "Say.p",
       "note": ""
     },
     {
       "kind": "symbol_removed",
-      "symbol": "Say.ssml_p()",
-      "replacement": "Say.p()",
+      "symbol": "Say.ssml_phoneme",
+      "replacement": "Say.phoneme",
       "note": ""
     },
     {
       "kind": "symbol_removed",
-      "symbol": "Say.ssml_phoneme()",
-      "replacement": "Say.phoneme()",
+      "symbol": "Say.ssml_prosody",
+      "replacement": "Say.prosody",
       "note": ""
     },
     {
       "kind": "symbol_removed",
-      "symbol": "Say.ssml_prosody()",
-      "replacement": "Say.prosody()",
+      "symbol": "Say.ssml_s",
+      "replacement": "Say.s",
       "note": ""
     },
     {
       "kind": "symbol_removed",
-      "symbol": "Say.ssml_s()",
-      "replacement": "Say.s()",
+      "symbol": "Say.ssml_say_as",
+      "replacement": "Say.say_as",
       "note": ""
     },
     {
       "kind": "symbol_removed",
-      "symbol": "Say.ssml_say_as()",
-      "replacement": "Say.say_as()",
+      "symbol": "Say.ssml_sub",
+      "replacement": "Say.sub",
       "note": ""
     },
     {
       "kind": "symbol_removed",
-      "symbol": "Say.ssml_sub()",
-      "replacement": "Say.sub()",
-      "note": ""
-    },
-    {
-      "kind": "symbol_removed",
-      "symbol": "Say.ssml_w()",
-      "replacement": "Say.w()",
+      "symbol": "Say.ssml_w",
+      "replacement": "Say.w",
       "note": ""
     },
     {
@@ -90,6 +97,27 @@
       "to": "twilio.rest.api.v2010.account.available_phone_number_country",
       "pending": false,
       "inferred": false
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": null,
+      "language": "python",
+      "before": "client.taskrouter.v1.workspaces('WS...').workers('WK...).cumulative_statistics()",
+      "after": "client.taskrouter.v1.workspaces('WS...').workers.cumulative_statistics()",
+      "note": "Cumulative and Real-Time Workers Statistics no longer accept a WorkerSid"
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": null,
+      "language": "python",
+      "before": "client.taskrouter.v1.workspaces('WS...').workers('WK...).real_time_statistics()",
+      "after": "client.taskrouter.v1.workspaces('WS...').workers.real_time_statistics()",
+      "note": "Cumulative and Real-Time Workers Statistics no longer accept a WorkerSid"
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "instance._properties",
+      "note": "Instance properties moved out of the generic _properties dict. This is an implementation detail that should not be depended upon."
     }
   ],
   "vectors": []

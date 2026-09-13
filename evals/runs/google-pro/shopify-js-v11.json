@@ -8,8 +8,8 @@
   "changes": [
     {
       "kind": "semantics_changed",
-      "op": "Node.js version",
-      "note": "Removed support for Node 16"
+      "op": "Node 16",
+      "note": "Removing Node 16 support"
     }
   ],
   "vectors": []

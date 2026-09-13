@@ -8,8 +8,8 @@
   "changes": [
     {
       "kind": "call_pattern_changed",
-      "symbol": "shopify.config.scopes",
-      "language": "js",
+      "symbol": null,
+      "language": "typescript",
       "before": "const scopes = shopify.config.scopes.toString();",
       "after": "const scopes = shopify.config.scopes ? shopify.config.scopes.toString() : '';",
       "note": "Scopes on config object are now optional"
@@ -23,11 +23,19 @@
     },
     {
       "kind": "call_pattern_changed",
-      "symbol": "WebhookValidationErrorReason.MissingHeaders",
-      "language": "ts",
+      "symbol": null,
+      "language": "typescript",
       "before": "if (\n  !check.valid &&\n  check.reason === WebhookValidationErrorReason.MissingHeaders &&\n  check.missingHeaders.includes(ShopifyHeader.Hmac)\n) {\n  // Handle error\n}",
       "after": "if (!check.valid && check.reason === WebhookValidationErrorReason.MissingHmac) {\n  // Handle error\n}",
-      "note": "Webhook validation no longer returns MissingHeaders when HMAC header is missing, returning MissingHmac instead."
+      "note": "Webhook validation no longer returns MissingHeaders when HMAC header is missing"
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": null,
+      "language": "typescript",
+      "before": "import 'node_modules/@shopify/shopify-api/lib/clients/admin/graphql/client';\nimport '@shopify/shopify-api/adapters/node';",
+      "after": "// Add `dist/esm|cjs/` before the file\nimport 'node_modules/@shopify/shopify-api/dist/esm/lib/clients/admin/graphql/client';\n// Unchanged\nimport '@shopify/shopify-api/adapters/node';",
+      "note": "Internal build paths changed to introduce ESM and CJS exports"
     }
   ],
   "vectors": []

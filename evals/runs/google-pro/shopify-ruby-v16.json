@@ -8,20 +8,20 @@
   "changes": [
     {
       "kind": "semantics_changed",
-      "op": "Minimum Ruby Version Requirement",
+      "op": "Ruby version",
       "note": "The minimum required Ruby version has been updated from 3.0 to 3.2."
     },
     {
       "kind": "symbol_removed",
-      "symbol": "Session#serialize",
+      "symbol": "ShopifyAPI::Auth::Session#serialize",
       "replacement": null,
-      "note": "Removed due to a security vulnerability. Applications are now responsible for their own session persistence by storing individual session attributes and reconstructing sessions using Session.new()."
+      "note": "Removed due to a security vulnerability. Applications should refactor to store individual session attributes."
     },
     {
       "kind": "symbol_removed",
-      "symbol": "Session.deserialize",
-      "replacement": null,
-      "note": "Removed due to a security vulnerability. Applications are now responsible for their own session persistence by storing individual session attributes and reconstructing sessions using Session.new()."
+      "symbol": "ShopifyAPI::Auth::Session.deserialize",
+      "replacement": "ShopifyAPI::Auth::Session.new()",
+      "note": "Removed due to a security vulnerability. Applications should reconstruct sessions using Session.new()."
     }
   ],
   "vectors": []
