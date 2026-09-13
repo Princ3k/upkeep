@@ -20,7 +20,10 @@ license a patch.
 
 from __future__ import annotations
 
-import anthropic
+try:
+    import anthropic
+except ModuleNotFoundError:  # pragma: no cover - exercised by the message below
+    anthropic = None
 
 from upkeep.detect.grounding import GroundingReport, drop_ungrounded
 from upkeep.models import MigrationSpec
@@ -91,6 +94,11 @@ def spec_from_guide(
     source from a document that never said it. The report comes back alongside
     the spec so a caller can see what was discarded.
     """
+    if anthropic is None:
+        raise ModuleNotFoundError(
+            "Reading migration guides needs the Anthropic SDK. "
+            "Install it with:  pip install 'upkeep[extract]'"
+        )
     client = client or anthropic.Anthropic()
 
     response = client.messages.parse(

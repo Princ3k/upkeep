@@ -13,6 +13,9 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+# Only reading migration guides needs a model. The pipeline — diff, index, plan,
+# patch, verify — runs without it, and should stay that way.
+extract = ["anthropic>=1.5"]
 
 [project.scripts]
 upkeep = "upkeep.cli:app"

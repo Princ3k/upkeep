@@ -6,8 +6,18 @@ the grounding check has an exact source to match against, with provenance in
 `corpus/manifest.json`.
 
 ```bash
-python evals/score.py     # exits non-zero on any fabrication
+pip install -e '.[extract]'
+export ANTHROPIC_API_KEY=sk-ant-...      # or run: ant auth login
+python evals/extract.py --estimate       # ~$0.84 for all ten
+python evals/extract.py --yes            # real run, overwrites extractions/
+python evals/score.py                    # exits non-zero on any fabrication
 ```
+
+`score.py` needs no key — it only reads the corpus and `extractions/`. Only
+`extract.py` calls the API, and only the guide reader needs a model at all: the
+pipeline itself (diff, index, plan, patch, verify) has no model in it and should
+stay that way, which is why `anthropic` is an optional extra rather than a
+dependency.
 
 ## What is measured, and why only this
 
