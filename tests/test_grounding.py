@@ -114,3 +114,19 @@ def test_dropping_ungrounded_changes_keeps_the_rest():
 def test_extraction_never_returns_what_it_cannot_find(bad):
     cleaned, _ = drop_ungrounded(spec_with(pattern(after=bad)), GUIDE)
     assert cleaned.changes == []
+
+
+def test_reformatted_code_is_not_fabrication():
+    """Real Gemini output joined the guide's four-line `Session.new(...)` call
+    onto one line. The content was exactly right; an earlier version of this
+    check called it invented and dropped it."""
+    joined = "ShopifyAPI::Auth::Session.new(shop: shop.shopify_domain)"
+    report = check_grounding(spec_with(pattern(after=joined)), GUIDE)
+    assert report.grounded == 1, report.fabricated[0].missing if report.fabricated else ""
+
+
+def test_splitting_one_line_across_several_is_not_fabrication():
+    """The same tolerance in the other direction."""
+    split = "ShopifyAPI::Auth::Session.new(\n  shop: shop.shopify_domain\n)"
+    report = check_grounding(spec_with(pattern(after=split)), GUIDE)
+    assert report.grounded == 1

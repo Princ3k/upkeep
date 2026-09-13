@@ -15,7 +15,9 @@ dependencies = [
 dev = ["pytest>=8.0"]
 # Only reading migration guides needs a model. The pipeline — diff, index, plan,
 # patch, verify — runs without it, and should stay that way.
-extract = ["anthropic>=1.5"]
+anthropic = ["anthropic>=1.5"]
+google = ["google-genai>=2.0"]
+extract = ["anthropic>=1.5", "google-genai>=2.0"]
 
 [project.scripts]
 upkeep = "upkeep.cli:app"

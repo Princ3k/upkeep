@@ -16,6 +16,7 @@ scores perfectly here, so recall needs a human or an independent grader.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 
 from upkeep.models import Change, MigrationSpec
@@ -27,6 +28,19 @@ _NOISE = {"{", "}", "(", ")", "end", "});", ")", "};", "]", "[", "", "..."}
 def _normalise(text: str) -> str:
     """Collapse whitespace so indentation differences don't read as fabrication."""
     return " ".join(text.split())
+
+
+def _squeeze(text: str) -> str:
+    """Drop whitespace entirely, for comparing code.
+
+    A model quoting a multi-line block often joins it onto one line — real
+    Gemini output turned the guide's four-line `Session.new(...)` call into a
+    single line. That is reformatting, not invention, and collapsing whitespace
+    only between lines still reported it as fabricated. Comparing code with
+    whitespace removed fixes that without weakening the check: every mutation in
+    tests/test_grounding.py changes a character that is not whitespace.
+    """
+    return re.sub(r"\s+", "", text)
 
 
 def _significant_lines(code: str) -> list[str]:
@@ -76,7 +90,7 @@ class GroundingReport:
         return self.grounded / self.total if self.total else 1.0
 
 
-def _check_change(change: Change, haystack: str, raw: str) -> ChangeGrounding:
+def _check_change(change: Change, haystack: str, raw: str, squeezed: str) -> ChangeGrounding:
     label = (
         getattr(change, "symbol", None)
         or getattr(change, "path", None)
@@ -101,7 +115,7 @@ def _check_change(change: Change, haystack: str, raw: str) -> ChangeGrounding:
         if not code:
             continue
         lines = _significant_lines(code)
-        absent = [ln for ln in lines if _normalise(ln) not in haystack]
+        absent = [ln for ln in lines if _squeeze(ln) not in squeezed]
         result.checks[f"{attribute}_in_guide"] = not absent
         result.missing += [f"{attribute}: {ln}" for ln in absent[:3]]
 
@@ -113,9 +127,12 @@ def _check_change(change: Change, haystack: str, raw: str) -> ChangeGrounding:
 
 def check_grounding(spec: MigrationSpec, guide_text: str, *, guide: str = "") -> GroundingReport:
     haystack = _normalise(guide_text)
+    squeezed = _squeeze(guide_text)
     return GroundingReport(
         guide=guide,
-        results=[_check_change(c, haystack, guide_text) for c in spec.changes],
+        results=[
+            _check_change(c, haystack, guide_text, squeezed) for c in spec.changes
+        ],
     )
 
 

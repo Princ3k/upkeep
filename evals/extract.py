@@ -9,6 +9,11 @@ model wrote in a session. Everything in `extractions/` is overwritten.
     python evals/extract.py --estimate          # what it will cost
     python evals/extract.py --yes               # actually run it
     python evals/score.py                       # grade the result
+
+Two providers, scored side by side:
+
+    python evals/extract.py --yes --provider anthropic --out runs/anthropic
+    python evals/extract.py --yes --provider google    --out runs/google
 """
 
 from __future__ import annotations
@@ -18,7 +23,7 @@ import json
 import sys
 from pathlib import Path
 
-from upkeep.detect.from_guide import spec_from_guide
+from upkeep.detect.from_guide import BACKENDS, spec_from_guide
 
 ROOT = Path(__file__).parent
 # claude-opus-5, $5 per Mtok in / $25 per Mtok out.
@@ -40,6 +45,13 @@ def main() -> int:
     parser.add_argument("--estimate", action="store_true", help="Price it and stop.")
     parser.add_argument("--yes", action="store_true", help="Confirm spending money.")
     parser.add_argument("--model", default=None, help="Override the model.")
+    parser.add_argument("--provider", default="anthropic", choices=sorted(BACKENDS),
+                        help="Which backend extracts. Both get the identical flat "
+                             "schema, so a comparison measures extraction rather "
+                             "than structured-output support.")
+    parser.add_argument("--out", default=None,
+                        help="Write to evals/<out>/ instead of evals/extractions/, "
+                             "so two providers can be scored side by side.")
     args = parser.parse_args()
 
     manifest = json.loads((ROOT / "corpus" / "manifest.json").read_text())
@@ -58,32 +70,38 @@ def main() -> int:
         print("\n  This calls the API and costs real money. Re-run with --yes.")
         return 1
 
-    out_dir = ROOT / "extractions"
+    backend_cls = BACKENDS[args.provider]
+    backend = backend_cls(model=args.model) if args.model else backend_cls()
+    print(f"  backend: {backend.name} / {backend.model}\n")
+
+    out_dir = ROOT / (args.out or "extractions")
     out_dir.mkdir(exist_ok=True)
     dropped_total = 0
 
     for entry in guides:
         stem = entry["file"][:-3]
         text = (ROOT / "corpus" / entry["file"]).read_text()
-        kwargs = {"model": args.model} if args.model else {}
-
-        spec, report = spec_from_guide(
+        result = spec_from_guide(
             text,
             provider=entry["provider"],
             from_version=entry["from"],
             to_version=entry["to"],
-            **kwargs,
+            backend=backend,
         )
         (out_dir / f"{stem}.json").write_text(
-            json.dumps(spec.model_dump(by_alias=True, mode="json"), indent=2) + "\n"
+            json.dumps(result.spec.model_dump(by_alias=True, mode="json"), indent=2) + "\n"
         )
 
-        dropped = len(report.fabricated)
-        dropped_total += dropped
-        flag = f"   {dropped} dropped as ungrounded" if dropped else ""
-        print(f"  {stem:<26} {len(spec.changes):>3} changes{flag}")
-        for result in report.fabricated:
-            print(f"      dropped {result.label}: {result.missing[:1]}")
+        dropped_total += result.dropped
+        notes = []
+        if result.dropped:
+            notes.append(f"{result.dropped} ungrounded")
+        if result.malformed:
+            notes.append(f"{result.malformed} malformed")
+        flag = f"   ({', '.join(notes)})" if notes else ""
+        print(f"  {stem:<26} {len(result.spec.changes):>3} changes{flag}")
+        for dropped in result.grounding.fabricated:
+            print(f"      dropped {dropped.label}: {dropped.missing[:1]}")
 
     print(f"\n  wrote {len(guides)} extractions; {dropped_total} change(s) dropped.")
     print("  now run: python evals/score.py")
