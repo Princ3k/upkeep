@@ -43,6 +43,12 @@ def detect(
     spec_dir: Path = typer.Option(None, "--spec-dir", help="Load specs from disk."),
     vectors: list[str] = typer.Option([], "--vector", help="Test material paths."),
     out: Path = typer.Option(None, "--out", help="Write the MigrationSpec here."),
+    declared: bool = typer.Option(
+        False,
+        "--declared",
+        help="Vouch for this diff: you checked it against the provider's "
+        "migration guide. Promotes inferred renames to patchable.",
+    ),
 ) -> None:
     """Diff two versions of a provider's surface into a MigrationSpec."""
     adapter = _resolve_provider(provider, spec_dir)
@@ -53,6 +59,7 @@ def detect(
         from_version=from_version,
         to_version=to_version,
         vectors=list(vectors),
+        declared=declared,
     )
 
     table = Table("kind", "detail", title=f"{spec.id} · {spec.severity.value}")

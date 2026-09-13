@@ -56,12 +56,29 @@ payload["amount"]                            # unrooted → escalated, never tou
 Both are spelled `amount`. A blanket find-and-replace gets one of them wrong,
 passes review, and breaks production.
 
-**2. Never guess a rename.**
+**2. Never guess a rename — and never trust your own guess.**
 
 A property vanished and another appeared. That *might* be a rename. upkeep only
-says so when exactly one removed and one added property share a type signature —
-otherwise it emits a `semantics_changed` and asks a human. See
-`test_ambiguous_removal_is_never_guessed`.
+says so when one removed and one added property uniquely share a type signature
+*and* the container isn't just a bag of same-shaped peers.
+
+That rule was written against a fixture and then measured against a year of
+Stripe's real spec, where **2 of 5 inferred renames were wrong**:
+
+| Claimed | Reality |
+| --- | --- |
+| `tipping.bgn` → `tipping.gip` | A map of ISO-4217 currencies. Bulgaria joined the euro; Gibraltar arrived separately. Renaming would silently repoint a merchant's tipping config at the wrong currency. |
+| `promotion_codes.coupon` → `customer_account` | Paired on type `string` and picked the wrong partner; the true successor is `promotion`, an object. |
+
+The first is now caught by the peer-set guard. **The second is not, and probably
+never will be by static means** — which is the real lesson. So a rename upkeep
+worked out for itself is marked `inferred` and can never reach Tier A. It is
+evidence for a reviewer, not an instruction for a codemod.
+
+A human who has checked a diff against the provider's migration guide promotes
+it with `--declared`. Against unvouched real Stripe data upkeep produces **zero**
+auto-merge PRs, which is the honest answer — and it is why a provider-published
+Migration Spec is the product, not a nice-to-have.
 
 **3. Never promise a patch you cannot write.**
 
@@ -108,6 +125,27 @@ after, with no test file modified. That round trip is `test_end_to_end.py`.
 | Provider console + burndown | The revenue side. Needs consumer-side usage data first. |
 | GitHub App delivery | `delivery/body.py` renders the body; nothing opens the PR yet. |
 | Multi-language | libcst is Python-only. A second language means a second indexer behind the same `CallSite` interface. |
+
+### Measured against Stripe
+
+`providers/stripe.py` loads any two versions of `stripe/openapi` by git ref, so
+these are reproducible:
+
+```bash
+upkeep detect -p stripe --from v2300 --to v2484   # 2026-05-27 -> 2026-08-26
+upkeep detect -p stripe --from v2000 --to v2484   # 2025-08-27 -> 2026-08-26
+```
+
+Over three months (1,422 → 1,454 schemas): 6 breaking property removals, caught
+6/6 with no false positives, against independently computed ground truth. Over a
+year: 4 renames and 6 escalations — one rename still wrong, all of them
+correctly held at Tier B.
+
+Two coverage bugs came out of that exercise and are fixed: every one of Stripe's
+587 shared operations declares its parameters under `requestBody`, which the
+differ originally ignored entirely; and a bare property removal was being graded
+`deprecation` when being unable to say what replaced it makes it worse, not
+milder.
 
 ### Known limits of the v0 indexer
 

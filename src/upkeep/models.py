@@ -45,6 +45,16 @@ class FieldRenamed(_Change):
     kind: Literal["field_renamed"] = "field_renamed"
     path: str
     to: str
+    inferred: bool = True
+    """True when upkeep guessed this pairing from a spec diff rather than being
+    told it by the provider.
+
+    Measured against a year of Stripe's real spec, 2 of 5 inferred renames were
+    wrong — a currency map losing `bgn` and gaining `gip`, and a `coupon` field
+    paired to `customer_account` when the true successor was `promotion`. Both
+    would have shipped as ready-to-merge patches. So an inferred rename is
+    evidence, not instruction: it never reaches Tier A on its own.
+    """
 
     @property
     def old_name(self) -> str:

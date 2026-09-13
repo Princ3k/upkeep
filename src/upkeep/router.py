@@ -33,6 +33,12 @@ def _route(change: Change, site: CallSite) -> tuple[Tier, str | None, str]:
         return Tier.C, None, "behavioural change with no mechanical equivalent"
 
     if isinstance(change, FieldRenamed):
+        if change.inferred:
+            return (
+                Tier.B,
+                None,
+                "rename was inferred from a spec diff, not declared by the provider",
+            )
         if not site.rooted:
             return (
                 Tier.C,

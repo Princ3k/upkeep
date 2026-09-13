@@ -29,6 +29,7 @@ def build_spec():
         from_version="v1",
         to_version="v2",
         vectors=["test_billing.py"],
+        declared=True,  # this fixture diff was checked by hand
     )
 
 

@@ -37,7 +37,10 @@ def site(name="amount", *, rooted=True, kind=SiteKind.attribute):
     )
 
 
-RENAME = FieldRenamed(path="InvoiceLine.amount", to="InvoiceLine.unit_amount")
+RENAME = FieldRenamed(
+    path="InvoiceLine.amount", to="InvoiceLine.unit_amount", inferred=False
+)
+INFERRED_RENAME = RENAME.model_copy(update={"inferred": True})
 
 
 def test_rooted_rename_is_tier_a():
@@ -137,3 +140,12 @@ def test_every_tier_a_item_names_an_implemented_codemod():
     for item in plan(spec_with(*changes), sites):
         if item.tier is Tier.A:
             assert item.rule in IMPLEMENTED_RULES, item
+
+
+def test_an_inferred_rename_never_reaches_tier_a():
+    """Two of five renames inferred from a year of Stripe's spec were wrong.
+    A guess is evidence for a reviewer, not an instruction for a codemod."""
+    (item,) = plan(spec_with(INFERRED_RENAME), [site()])
+    assert item.tier is Tier.B
+    assert item.rule is None
+    assert "not declared by the provider" in item.reason
