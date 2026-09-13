@@ -175,6 +175,47 @@ schema removed *outright* was invisible to a diff that only walks keys present
 in both versions: Twilio dropped ten `usage_record_*_enum_category` enums in one
 release and the differ graded that release `additive`.
 
+### Shopify: no run, and that is the finding
+
+Shopify was measured third and the sweep could not be run at all. There is no
+public machine-readable versioned schema to diff:
+
+- No OpenAPI document for the REST Admin API.
+- The GraphQL Admin schema is only reachable by authenticated introspection
+  against a real shop, so there is nothing to fetch by version.
+- Their own release-notes page offers documentation links and no schema
+  download.
+
+Their breaking changes are real and field-level — "`discountedUnitPrice` on
+`DraftOrderLineItem` ... deprecation", "Storefront MCP cart tools are being
+deprecated in favour of UCP Cart MCP", "Script tags are deprecated and will
+stop running on March 1, 2027" — but they live in prose on a changelog and in
+`BREAKING_CHANGES_FOR_V*.md` files inside the SDK repos, complete with
+before-and-after code samples.
+
+**No `ShopifyProvider` was written.** An adapter that cannot load a spec is a
+stub that makes the roster look better than it is.
+
+### Three providers, three different shapes
+
+| | Machine-readable versioned spec | Where the breakage actually lives |
+| --- | --- | --- |
+| Stripe | Yes | Spec, partially — renames hide in coexistence and the changelog |
+| Twilio | Yes | Spec for endpoint removals; the rest in SDK major versions |
+| Shopify | **No** | Prose changelog and SDK migration guides only |
+
+The input upkeep was built on — a public, versioned, diffable spec — exists for
+two of three, and under-reports for both of those. The input that exists for all
+three, and is the most complete for each, is the prose migration guide. Shopify
+even ships before-and-after code samples in the consumer's own language, which
+is *better* material for writing a patch than any schema diff.
+
+That argues for turning the pipeline around. `detect` was built spec-first, with
+prose as a late addition; the evidence says the changelog should be the primary
+input and the spec diff the corroboration. Nothing in the stages after `detect`
+changes — `MigrationSpec` is already the interface, and `upkeep run --spec` will
+consume a hand-authored or guide-derived one today.
+
 ## How often do providers actually rename? Measured wrong, twice.
 
 The first sweep reported **zero renames** across three months of Stripe and all
