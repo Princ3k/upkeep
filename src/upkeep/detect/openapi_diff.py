@@ -48,13 +48,51 @@ def _schemas(spec: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return (spec.get("components") or {}).get("schemas") or {}
 
 
+def _resolve(spec: dict[str, Any], node: Any, depth: int = 0) -> Any:
+    """Follow a local `$ref` such as `#/components/parameters/XTwilioApiVersion`.
+
+    Real specs use these freely — Twilio declares a shared API-version header
+    that way — and a parameter entry that is only a `$ref` has no `name` of its
+    own. Anything non-local or unresolvable comes back untouched for the caller
+    to skip.
+    """
+    while isinstance(node, dict) and "$ref" in node and depth < 10:
+        ref = node["$ref"]
+        if not isinstance(ref, str) or not ref.startswith("#/"):
+            return node
+        target: Any = spec
+        for segment in ref[2:].split("/"):
+            if not isinstance(target, dict) or segment not in target:
+                return node
+            target = target[segment]
+        node, depth = target, depth + 1
+    return node
+
+
+def _parameters(spec: dict[str, Any], operation: dict[str, Any]) -> list[dict[str, Any]]:
+    """Named parameters for an operation, refs resolved and the rest skipped."""
+    resolved = []
+    for entry in operation.get("parameters") or []:
+        entry = _resolve(spec, entry)
+        if isinstance(entry, dict) and "name" in entry:
+            resolved.append(entry)
+    return resolved
+
+
 def _operations(spec: dict[str, Any]) -> dict[tuple[str, str], dict[str, Any]]:
     out: dict[tuple[str, str], dict[str, Any]] = {}
     for path, item in (spec.get("paths") or {}).items():
         if not isinstance(item, dict):
             continue
+        # Parameters declared on the path item apply to every operation under it.
+        shared = item.get("parameters") or []
         for method, operation in item.items():
             if method.lower() in HTTP_METHODS and isinstance(operation, dict):
+                if shared:
+                    operation = {
+                        **operation,
+                        "parameters": [*shared, *(operation.get("parameters") or [])],
+                    }
                 out[(method.upper(), path)] = operation
     return out
 
@@ -148,15 +186,9 @@ def _diff_operations(old: dict, new: dict, *, declared: bool = False) -> list[Ch
     for key in sorted(set(old_ops) & set(new_ops)):
         method, path = key
         old_required = {
-            p["name"]
-            for p in old_ops[key].get("parameters", [])
-            if isinstance(p, dict) and p.get("required")
+            p["name"] for p in _parameters(old, old_ops[key]) if p.get("required")
         }
-        new_params = {
-            p["name"]: p
-            for p in new_ops[key].get("parameters", [])
-            if isinstance(p, dict)
-        }
+        new_params = {p["name"]: p for p in _parameters(new, new_ops[key])}
         for param_name, param in new_params.items():
             if param.get("required") and param_name not in old_required:
                 schema = param.get("schema") or {}
@@ -222,6 +254,25 @@ def diff_specs(
     changes: list[Change] = []
 
     old_schemas, new_schemas = _schemas(old), _schemas(new)
+
+    # A schema that disappeared outright is invisible to a shared-key diff, but
+    # anything referencing that type has to be rewritten. Twilio dropping ten
+    # `usage_record_*_enum_category` enums in one release is the case that
+    # proved it. The added schemas in the same release were unrelated new
+    # features, so no pairing is attempted here — same rule as properties.
+    added_count = len(set(new_schemas) - set(old_schemas))
+    for name in sorted(set(old_schemas) - set(new_schemas)):
+        changes.append(
+            SemanticsChanged(
+                op=name,
+                note=(
+                    f"schema removed entirely; {added_count} schemas were added "
+                    "in this window but none is a declared replacement — every "
+                    "reference to this type must be rewritten by hand"
+                ),
+            )
+        )
+
     for name in sorted(set(old_schemas) & set(new_schemas)):
         changes.extend(
             _diff_schema_properties(

@@ -147,6 +147,52 @@ differ originally ignored entirely; and a bare property removal was being graded
 `deprecation` when being unable to say what replaced it makes it worse, not
 milder.
 
+### Measured against Twilio
+
+Twilio publishes one spec per product surface, so `--domain` selects one:
+
+```bash
+upkeep detect -p twilio --domain api_v2010 --from 2.0.0 --to 2.8.2
+upkeep detect -p twilio --domain preview   --from 2.0.0 --to 2.8.2
+```
+
+Sweeping all 60 surfaces across that window (17 didn't exist at 2.0.0) found
+**122 breaking changes**, spot-checked exactly against independently computed
+ground truth:
+
+| | |
+| --- | --- |
+| `endpoint_removed` | 71 |
+| `semantics_changed` | 51 |
+| `field_renamed` | **0** |
+
+Three more defects came out of it. Twilio declares a shared API-version header
+as a `$ref`, so that parameter entry has no `name` of its own — indexing it
+blind raised `KeyError` and took down the whole sweep. Parameters declared on a
+path item, which apply to every operation beneath it, were not being read. And a
+schema removed *outright* was invisible to a diff that only walks keys present
+in both versions: Twilio dropped ten `usage_record_*_enum_category` enums in one
+release and the differ graded that release `additive`.
+
+## What two real providers say about the thesis
+
+The design this repo started from assumed deterministic codemods would cover
+most real API churn, which is why Tier A was built first.
+
+Measured, that is wrong. Across a year of Stripe and 60 Twilio surfaces, the
+`rename_field` codemod — the only Tier A rule — had **essentially nothing to
+do**: zero renames in three months of Stripe, zero across all of Twilio, and of
+the five Stripe eventually produced, two were wrong. What actually breaks
+consumers is endpoints disappearing and fields vanishing with no stated
+successor. Both need judgment. Neither is a mechanical rename.
+
+So the near-term value is not the patch. It is the sentence *"this release
+breaks these 14 call sites in your code, here they are, and here is what upkeep
+could not work out"* — impact analysis nobody currently sells, which needs no
+write access to anyone's repository. The automatic fix is the second act, and it
+needs contract replay and provider-declared specs before it is worth trusting.
+That reorders what to build next.
+
 ### Known limits of the v0 indexer
 
 Bindings live in one flat module scope, with no shadowing analysis, and flow

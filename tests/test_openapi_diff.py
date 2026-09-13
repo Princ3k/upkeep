@@ -237,3 +237,73 @@ def test_renames_are_marked_inferred_unless_vouched_for():
         provider="acme", from_version="v1", to_version="v2",
     )
     assert undeclared.field_renames()[0].inferred is True
+
+
+def test_a_schema_removed_entirely_is_reported():
+    """Twilio dropped ten `usage_record_*_enum_category` enums in one release.
+    A diff that only walks schemas present in both versions reports nothing at
+    all, and grades the release `additive`."""
+    old = {"paths": {}, "components": {"schemas": {
+        "usage_record_enum_category": {"type": "string", "enum": ["a", "b"]},
+        "account": {"properties": {"sid": {"type": "string"}}}}}}
+    new = {"paths": {}, "components": {"schemas": {
+        "realtime_transcription_enum_track": {"type": "string", "enum": ["x"]},
+        "account": {"properties": {"sid": {"type": "string"}}}}}}
+    spec = diff_specs(old, new, provider="twilio", from_version="a", to_version="b")
+
+    (gone,) = [c for c in spec.changes if isinstance(c, SemanticsChanged)]
+    assert gone.op == "usage_record_enum_category"
+    assert "removed entirely" in gone.note
+    assert spec.severity is Severity.breaking
+
+
+def test_a_removed_schema_is_never_paired_with_an_added_one():
+    """The added schema has the same shape, which under the property rule would
+    have looked like a rename. Schemas are not paired at all."""
+    shape = {"type": "string", "enum": ["a", "b"]}
+    old = {"paths": {}, "components": {"schemas": {"old_enum": dict(shape)}}}
+    new = {"paths": {}, "components": {"schemas": {"new_enum": dict(shape)}}}
+    spec = diff_specs(old, new, provider="twilio", from_version="a", to_version="b",
+                      declared=True)
+    assert not spec.field_renames()
+
+
+def test_ref_style_parameters_do_not_crash_the_differ():
+    """Twilio declares a shared API-version header as a `$ref`, so the parameter
+    entry carries no `name` of its own. Indexing it blind raised KeyError and
+    took down a sweep of 60 product specs."""
+    def spec(required):
+        return {
+            "paths": {"/v1/Services": {"post": {"parameters": [
+                {"$ref": "#/components/parameters/XTwilioApiVersion"},
+                {"name": "PageSize", "in": "query", "required": required,
+                 "schema": {"type": "integer", "default": 50}},
+            ]}}},
+            "components": {
+                "schemas": {},
+                "parameters": {"XTwilioApiVersion": {
+                    "name": "X-Twilio-Api-Version", "in": "header",
+                    "schema": {"type": "string"}}},
+            },
+        }
+    changes = diff_specs(spec(False), spec(True), provider="twilio",
+                         from_version="a", to_version="b").changes
+    added = [c for c in changes if isinstance(c, ParamRequiredAdded)]
+    assert [(c.param, c.safe_default) for c in added] == [("PageSize", 50)]
+
+
+def test_path_level_parameters_are_seen_by_operations():
+    """A parameter declared on the path item applies to every operation under
+    it; reading only the operation's own list misses it."""
+    def spec(required):
+        return {
+            "paths": {"/v1/Messages": {
+                "parameters": [{"name": "AccountSid", "in": "path",
+                                "required": required, "schema": {"type": "string"}}],
+                "get": {"operationId": "listMessages"},
+            }},
+            "components": {"schemas": {}},
+        }
+    changes = diff_specs(spec(False), spec(True), provider="twilio",
+                         from_version="a", to_version="b").changes
+    assert [c.param for c in changes if isinstance(c, ParamRequiredAdded)] == ["AccountSid"]

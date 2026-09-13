@@ -20,6 +20,7 @@ from upkeep.models import MigrationSpec, Tier
 from upkeep.patch import apply_plan
 from upkeep.providers import get_provider
 from upkeep.providers.acme import AcmeProvider
+from upkeep.providers.twilio import TwilioProvider
 from upkeep.router import plan as build_plan
 from upkeep.verify import run_gate
 
@@ -29,9 +30,11 @@ console = Console()
 TIER_STYLE = {"A": "green", "B": "yellow", "C": "red"}
 
 
-def _resolve_provider(name: str, spec_dir: Path | None):
+def _resolve_provider(name: str, spec_dir: Path | None, domain: str | None = None):
     if name == "acme" and spec_dir is not None:
         return AcmeProvider(spec_dir)
+    if name == "twilio" and domain:
+        return TwilioProvider(domain)
     return get_provider(name)
 
 
@@ -41,6 +44,12 @@ def detect(
     from_version: str = typer.Option(..., "--from"),
     to_version: str = typer.Option(..., "--to"),
     spec_dir: Path = typer.Option(None, "--spec-dir", help="Load specs from disk."),
+    domain: str = typer.Option(
+        None,
+        "--domain",
+        help="For providers that publish one spec per product surface "
+        "(Twilio: api_v2010, messaging_v1, ...).",
+    ),
     vectors: list[str] = typer.Option([], "--vector", help="Test material paths."),
     out: Path = typer.Option(None, "--out", help="Write the MigrationSpec here."),
     declared: bool = typer.Option(
@@ -51,7 +60,7 @@ def detect(
     ),
 ) -> None:
     """Diff two versions of a provider's surface into a MigrationSpec."""
-    adapter = _resolve_provider(provider, spec_dir)
+    adapter = _resolve_provider(provider, spec_dir, domain)
     spec = diff_specs(
         adapter.load_spec(from_version),
         adapter.load_spec(to_version),
