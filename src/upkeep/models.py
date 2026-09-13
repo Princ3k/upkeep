@@ -90,6 +90,32 @@ class ParamRequiredAdded(_Change):
     safe_default: Any | None = None
 
 
+class SymbolRemoved(_Change):
+    """A class, method, or constant the SDK no longer exposes.
+
+    Migration guides are mostly made of these, and the schema had no word for
+    one: Shopify's v16 notice removes `Session#serialize` and
+    `Session.deserialize`, and both landed in `semantics_changed` alongside a
+    Ruby version bump, which loses the one thing that makes them actionable —
+    a name the indexer can search for.
+
+    No codemod writes these. The value is impact analysis: telling someone the
+    fourteen places they call a method that is about to stop existing.
+    """
+
+    kind: Literal["symbol_removed"] = "symbol_removed"
+    symbol: str
+    """Fully qualified as the guide writes it, e.g. `Session#serialize`."""
+    replacement: str | None = None
+    note: str = ""
+
+    @property
+    def leaf(self) -> str:
+        """The bare identifier, for matching against indexed call sites."""
+        parts = self.symbol.replace("#", ".").replace("::", ".").split(".")
+        return parts[-1]
+
+
 class SemanticsChanged(_Change):
     """The catch-all for anything upkeep found but refuses to interpret.
 
@@ -103,7 +129,7 @@ class SemanticsChanged(_Change):
 
 
 Change = Annotated[
-    Union[FieldRenamed, EndpointRemoved, ParamRequiredAdded, SemanticsChanged],
+    Union[FieldRenamed, EndpointRemoved, ParamRequiredAdded, SymbolRemoved, SemanticsChanged],
     Field(discriminator="kind"),
 ]
 

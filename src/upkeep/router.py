@@ -20,6 +20,7 @@ from upkeep.models import (
     ParamRequiredAdded,
     SemanticsChanged,
     SiteKind,
+    SymbolRemoved,
     Tier,
     WorkItem,
 )
@@ -31,6 +32,11 @@ RENAMEABLE = {SiteKind.attribute, SiteKind.subscript, SiteKind.kwarg}
 def _route(change: Change, site: CallSite) -> tuple[Tier, str | None, str]:
     if isinstance(change, SemanticsChanged):
         return Tier.C, None, "behavioural change with no mechanical equivalent"
+
+    if isinstance(change, SymbolRemoved):
+        if change.replacement:
+            return Tier.C, None, f"removed; the guide points to {change.replacement}"
+        return Tier.C, None, "symbol removed with no replacement named in the guide"
 
     if isinstance(change, FieldRenamed):
         if change.inferred:
@@ -103,6 +109,8 @@ def _call_targets_path(symbol: str, path: str) -> bool:
 def _affects(change: Change, site: CallSite) -> bool:
     if isinstance(change, FieldRenamed):
         return site.name == change.old_name
+    if isinstance(change, SymbolRemoved):
+        return site.name == change.leaf
     if isinstance(change, SemanticsChanged):
         return site.name == change.op.rsplit(".", 1)[-1]
     if site.kind is not SiteKind.call:

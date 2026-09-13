@@ -1,0 +1,28 @@
+{
+  "id": "shopify-ruby-15-16",
+  "provider": "shopify-ruby",
+  "from": "15",
+  "to": "16",
+  "severity": "breaking",
+  "effective": null,
+  "changes": [
+    {
+      "kind": "semantics_changed",
+      "op": "ruby",
+      "note": "Minimum required Ruby version raised from 3.0 to 3.2 because Ruby 3.0 and 3.1 reached End of Life. Not a code change: the runtime must be upgraded before the library can be."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::Auth::Session#serialize",
+      "replacement": null,
+      "note": "Removed. Used for session persistence when the library handled session storage; after storage was deprecated in v12.3.0 applications became responsible for their own persistence. Callers must store individual session attributes instead."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::Auth::Session.deserialize",
+      "replacement": "ShopifyAPI::Auth::Session.new",
+      "note": "Removed due to a security vulnerability: it called Oj.load without safe mode, allowing instantiation of arbitrary Ruby objects. Callers must reconstruct sessions with Session.new() from individually stored attributes."
+    }
+  ],
+  "vectors": []
+}

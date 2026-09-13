@@ -196,6 +196,40 @@ before-and-after code samples.
 **No `ShopifyProvider` was written.** An adapter that cannot load a spec is a
 stub that makes the roster look better than it is.
 
+### Feeding Shopify's guide to a model
+
+Shopify's `BREAKING_CHANGES_FOR_V16.md` was run through Claude Opus 5 under the
+prompt in `detect/from_guide.py`, which asks only for transcription: report what
+the text says, and put anything that does not fit the vocabulary into the escape
+hatch rather than dressing it up as patchable.
+
+The extraction was clean. Three changes, correct severity, faithful notes, valid
+against the same `MigrationSpec` a spec diff produces — so everything downstream
+is unchanged. And because a guide is the provider stating the change in their own
+words, renames from this path are `declared`, not inferred.
+
+Then the result:
+
+| | |
+| --- | --- |
+| `field_renamed` | 0 |
+| `endpoint_removed` | 0 |
+| `param_required_added` | 0 |
+| escalations | 3 of 3 |
+
+**Nothing was patchable, and the model was not the reason.** `Session#serialize`
+and `Session.deserialize` are removed *SDK methods*, and the schema — designed
+from OpenAPI diffs, where the nouns are fields, endpoints and parameters — had no
+word for one. Both landed in `semantics_changed` next to a Ruby version bump,
+which loses the only thing that makes them actionable: a name the indexer can
+search for. So `symbol_removed` now exists, and those two are findable.
+
+The rest of the gap is not closed. The guide's most valuable content is two Ruby
+code blocks showing exactly how the call changes, and the schema has nowhere to
+put a before-and-after call pattern. That is the next thing to add, and it is
+where a model earns its place in this pipeline — not reading prose, which turned
+out to be easy, but rewriting a call shape that no AST rule can express.
+
 ### Three providers, three different shapes
 
 | | Machine-readable versioned spec | Where the breakage actually lives |
