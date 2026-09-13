@@ -12,16 +12,20 @@
       "note": "Minimum required Ruby version raised from 3.0 to 3.2 because Ruby 3.0 and 3.1 reached End of Life. Not a code change: the runtime must be upgraded before the library can be."
     },
     {
-      "kind": "symbol_removed",
+      "kind": "call_pattern_changed",
       "symbol": "ShopifyAPI::Auth::Session#serialize",
-      "replacement": null,
-      "note": "Removed. Used for session persistence when the library handled session storage; after storage was deprecated in v12.3.0 applications became responsible for their own persistence. Callers must store individual session attributes instead."
+      "language": "ruby",
+      "before": "serialized_data = session.serialize\n# Store serialized_data in Redis, database, etc.\nredis.set(\"session:#{session.id}\", serialized_data)",
+      "after": "# Stores attributes in database columns\ndef store(auth_session)\n  shop = find_or_initialize_by(shopify_domain: auth_session.shop)\n  shop.shopify_token = auth_session.access_token\n  shop.save!\nend",
+      "note": "`Session#serialize` was removed. Applications must store individual session attributes rather than a serialized blob. The guide’s own \"New implementation\" heading carries no code block; this `after` is taken from the shopify_app reference implementation shown later in the same document."
     },
     {
-      "kind": "symbol_removed",
+      "kind": "call_pattern_changed",
       "symbol": "ShopifyAPI::Auth::Session.deserialize",
-      "replacement": "ShopifyAPI::Auth::Session.new",
-      "note": "Removed due to a security vulnerability: it called Oj.load without safe mode, allowing instantiation of arbitrary Ruby objects. Callers must reconstruct sessions with Session.new() from individually stored attributes."
+      "language": "ruby",
+      "before": "serialized_data = redis.get(\"session:#{session_id}\")\nsession = ShopifyAPI::Auth::Session.deserialize(serialized_data)",
+      "after": "ShopifyAPI::Auth::Session.new(\n  shop: shop.shopify_domain,\n  access_token: shop.shopify_token\n)",
+      "note": "`Session.deserialize` was removed due to a security vulnerability: it called Oj.load without safe mode, allowing instantiation of arbitrary Ruby objects. Sessions are reconstructed with Session.new() from stored attributes. The guide’s own \"New implementation\" heading carries no code block; this `after` is taken from the shopify_app reference implementation shown later in the same document."
     }
   ],
   "vectors": []

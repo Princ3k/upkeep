@@ -224,11 +224,28 @@ word for one. Both landed in `semantics_changed` next to a Ruby version bump,
 which loses the only thing that makes them actionable: a name the indexer can
 search for. So `symbol_removed` now exists, and those two are findable.
 
-The rest of the gap is not closed. The guide's most valuable content is two Ruby
-code blocks showing exactly how the call changes, and the schema has nowhere to
-put a before-and-after call pattern. That is the next thing to add, and it is
-where a model earns its place in this pipeline — not reading prose, which turned
-out to be easy, but rewriting a call shape that no AST rule can express.
+That gap is now closed too. `call_pattern_changed` carries the guide's own
+before-and-after code verbatim, which is the thing no schema diff can express:
+Shopify does not merely say `Session.deserialize` is gone, it shows the call it
+replaces and the shape that replaces it. Three rules keep it honest:
+
+- **It is an illustration, not a rule**, so it is Tier B and can never reach a
+  deterministic codemod. One example cannot tell you how the change applies to a
+  call site with different names, different surroundings, or arguments the sample
+  never shows. Rewriting a call shape from an example is the one job here that
+  genuinely needs a model.
+- **`language` is required and enforced.** `serialize` is a common method name;
+  applying Shopify's Ruby rewrite to a Python call site that merely shares it
+  would be a corrupting patch generated from an unrelated document. The planner
+  refuses to match across languages. Changes carrying no language describe the
+  wire format and still apply everywhere.
+- **An unusable example is rejected at the schema.** No `before` to match, no
+  `after` to write, or the two identical — each would send a model off to rewrite
+  real code on no information. A guide that shows only the old call is a
+  `symbol_removed`, not a pattern change.
+
+The report a reviewer receives now carries that example beside their own call
+site, which is most of the value even before anything writes a patch.
 
 ### Three providers, three different shapes
 

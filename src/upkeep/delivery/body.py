@@ -85,24 +85,55 @@ def render_pr_body(
 
 
 def render_issue(spec: MigrationSpec, items: list[WorkItem]) -> str:
-    escalations = [i for i in items if i.tier is Tier.C]
+    """Everything upkeep found and is not going to patch.
+
+    Tier B and Tier C both belong here. Listing only Tier C meant a spec made
+    entirely of pattern rewrites — which is what a migration guide produces —
+    rendered as "0 site(s) need review" with real call sites sitting unreported.
+    """
+    unpatched = [i for i in items if i.tier is not Tier.A]
     lines = [
         f"## {spec.provider} `{spec.from_version}` → `{spec.to_version}`: "
-        f"{len(escalations)} site(s) need review",
+        f"{len(unpatched)} site(s) need review",
         "",
         "upkeep did not open a pull request for these. Each one is a place where "
         "an automatic patch could not be proven correct.",
         "",
     ]
-    for item in escalations:
-        site = item.site
+    for item in unpatched:
+        site, change = item.site, item.change
         lines += [
             f"### `{site.file}:{site.line}`",
             "",
-            f"```python\n{site.expression}\n```",
+            f"```{site.language}\n{site.expression}\n```",
             "",
-            f"- **Change:** `{item.change.kind}`",
+            f"- **Change:** `{change.kind}`",
             f"- **Why not patched:** {item.reason}",
-            "",
         ]
+
+        note = getattr(change, "note", "")
+        if note:
+            lines += ["", f"> {note}"]
+
+        # The payoff of reading the guide: the provider's own worked example,
+        # next to the reviewer's own call site.
+        before = getattr(change, "before", None)
+        after = getattr(change, "after", None)
+        if before and after:
+            language = getattr(change, "language", "")
+            lines += [
+                "",
+                "<details><summary>The guide's example</summary>",
+                "",
+                "Before:",
+                "",
+                f"```{language}\n{before}\n```",
+                "",
+                "After:",
+                "",
+                f"```{language}\n{after}\n```",
+                "",
+                "</details>",
+            ]
+        lines.append("")
     return "\n".join(lines)

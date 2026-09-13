@@ -12,6 +12,7 @@ from __future__ import annotations
 import re
 
 from upkeep.models import (
+    CallPatternChanged,
     CallSite,
     Change,
     EndpointRemoved,
@@ -32,6 +33,13 @@ RENAMEABLE = {SiteKind.attribute, SiteKind.subscript, SiteKind.kwarg}
 def _route(change: Change, site: CallSite) -> tuple[Tier, str | None, str]:
     if isinstance(change, SemanticsChanged):
         return Tier.C, None, "behavioural change with no mechanical equivalent"
+
+    if isinstance(change, CallPatternChanged):
+        return (
+            Tier.B,
+            None,
+            "call shape must be rewritten from an example, which needs a model",
+        )
 
     if isinstance(change, SymbolRemoved):
         if change.replacement:
@@ -106,10 +114,22 @@ def _call_targets_path(symbol: str, path: str) -> bool:
     return any(len(name) > 3 and name in compact for name in names)
 
 
+def _language_matches(change: Change, site: CallSite) -> bool:
+    """A change written against one SDK language never applies to another.
+
+    Changes carrying no language describe the API surface itself (a renamed JSON
+    field, a removed endpoint) and apply to every consumer regardless.
+    """
+    language = getattr(change, "language", None)
+    return language is None or language == site.language
+
+
 def _affects(change: Change, site: CallSite) -> bool:
+    if not _language_matches(change, site):
+        return False
     if isinstance(change, FieldRenamed):
         return site.name == change.old_name
-    if isinstance(change, SymbolRemoved):
+    if isinstance(change, (SymbolRemoved, CallPatternChanged)):
         return site.name == change.leaf
     if isinstance(change, SemanticsChanged):
         return site.name == change.op.rsplit(".", 1)[-1]

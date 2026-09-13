@@ -48,12 +48,21 @@ Rules, in order of importance:
    new one.
 
 4. `endpoint_removed` is only for an HTTP endpoint. A removed SDK method is not
-   an endpoint.
+   an endpoint — use `symbol_removed` for that.
 
-5. `param_required_added` needs the document to name the parameter. Set
+5. When the guide shows the old call and the shape that replaces it, use
+   `call_pattern_changed` and copy both verbatim. Do not paraphrase code, do not
+   tidy it, and do not write an `after` the document does not contain: an
+   invented example is worse than no example, because something downstream will
+   rewrite real code from it. If the guide shows only the old call, that is a
+   `symbol_removed`, not a pattern change. Set `language` to the SDK's language,
+   never the provider's API. A pattern may be drawn from a reference or appendix
+   section as long as the document actually shows it; say so in `note`.
+
+6. `param_required_added` needs the document to name the parameter. Set
    `safe_default` only if the document states a default; otherwise leave it null.
 
-6. Set `severity` from the document's own framing. If it calls the release
+7. Set `severity` from the document's own framing. If it calls the release
    breaking, it is breaking.
 
 Quote nothing you cannot point at in the text.\

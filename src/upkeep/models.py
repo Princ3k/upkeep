@@ -10,7 +10,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Annotated, Any, Literal, Union
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class Severity(str, Enum):
@@ -116,6 +116,51 @@ class SymbolRemoved(_Change):
         return parts[-1]
 
 
+class CallPatternChanged(_Change):
+    """The call shape changed, shown as before-and-after code.
+
+    This is the richest thing a migration guide carries and the thing no schema
+    diff can express. Shopify's v16 notice does not just say `Session.deserialize`
+    is gone — it shows the old call and the shape that replaces it.
+
+    It is an *illustration*, not a rule. One example cannot tell you how the
+    change applies to a call site with different variable names, different
+    surrounding structure, or arguments the sample never shows, which is exactly
+    why this routes to Tier B and never to a deterministic codemod. Rewriting a
+    call shape from an example is the one job in this pipeline that genuinely
+    needs a model.
+
+    `language` is required and load-bearing. A Ruby sample must never be applied
+    to a Python call site that happens to share a method name, so the planner
+    refuses to match across languages.
+    """
+
+    kind: Literal["call_pattern_changed"] = "call_pattern_changed"
+    symbol: str
+    language: str
+    before: str
+    after: str
+    note: str = ""
+
+    @model_validator(mode="after")
+    def _usable_as_an_example(self) -> "CallPatternChanged":
+        if not self.before.strip():
+            raise ValueError("a call pattern needs a `before` to match against")
+        if not self.after.strip():
+            raise ValueError(
+                "a call pattern needs an `after`; a guide that shows only the old "
+                "call describes a removal — use symbol_removed instead"
+            )
+        if self.before.strip() == self.after.strip():
+            raise ValueError("`before` and `after` are identical, so nothing changed")
+        return self
+
+    @property
+    def leaf(self) -> str:
+        parts = self.symbol.replace("#", ".").replace("::", ".").split(".")
+        return parts[-1]
+
+
 class SemanticsChanged(_Change):
     """The catch-all for anything upkeep found but refuses to interpret.
 
@@ -129,7 +174,14 @@ class SemanticsChanged(_Change):
 
 
 Change = Annotated[
-    Union[FieldRenamed, EndpointRemoved, ParamRequiredAdded, SymbolRemoved, SemanticsChanged],
+    Union[
+        FieldRenamed,
+        EndpointRemoved,
+        ParamRequiredAdded,
+        SymbolRemoved,
+        CallPatternChanged,
+        SemanticsChanged,
+    ],
     Field(discriminator="kind"),
 ]
 
@@ -175,6 +227,15 @@ class CallSite(BaseModel):
     name: str
     """The identifier touched — an attribute name, dict key, or keyword arg."""
     expression: str
+    language: str = "python"
+    """Which language this site is written in.
+
+    The indexer is libcst-only today so this is always Python, but a migration
+    guide is written against one SDK in one language: without this, a Ruby
+    before/after sample would happily match a Python call site that shares a
+    method name.
+    """
+
     rooted: bool
     """True when upkeep can prove this expression descends from a provider call.
 
