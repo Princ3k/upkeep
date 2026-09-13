@@ -101,6 +101,77 @@ which is why the near-term product is impact analysis, and why the model's job
 here is reading prose rather than writing patches.
 
 
+## The A/B: two real runs
+
+Both arms were produced by `evals/extract.py` against the API, so unlike
+`extractions/` they are machine-made and reproducible. No Anthropic credential
+was available, so this compares two tiers of one provider rather than two
+providers. Both got the identical flat schema.
+
+| | hand-made | gemini-3.1-pro | gemini-3-flash |
+| --- | --- | --- | --- |
+| Changes | 88 | 79 | 93 |
+| Grounded | 88/88 | **79/79** | **93/93** |
+| Fabrications | 0 | **0** | **0** |
+| `call_pattern_changed` | 25 | 8 | 18 |
+| Tier A (auto-patchable) | **2** | **2** | **2** |
+| Wall clock | — | 4m34s | ~3m |
+| Cost | — | ~$0.30 | ~$0.08 |
+
+**Nothing was fabricated by either model.** Across 172 machine-extracted changes
+from ten real documents, every symbol and every line of quoted code was present
+in its source. That is the result the grounding check exists to produce, and it
+held without a single drop.
+
+**Tier A is 2 in all three runs.** The substantive finding of this whole
+exercise — migration guides are dense with things worth reporting and nearly
+empty of things safe to fix — did not move across three independent extractors.
+That is the number worth trusting here.
+
+**The flash model extracted more than the pro model**, 93 against 79, and more
+than twice as many call patterns. Which is a caution about assuming the bigger
+model is better at a transcription task, not a recommendation: see below.
+
+### The number that actually matters: 60%
+
+```
+python evals/compare.py runs/google-pro runs/google-flash
+```
+
+The two runs agree on **60% of the bare identifiers** either one named (49% on
+exact labels, but that penalises writing `Session#serialize` where the other
+wrote `ShopifyAPI::Auth::Session#serialize`). Each run against the hand-made set
+agrees at 56-57%.
+
+So: three extractors, all perfectly grounded, all fabricating nothing — and any
+two of them disagree about what a document says roughly 40% of the time. **They
+are not clean because they are accurate; they are clean because grounding only
+catches invention, and none of them invented anything.** Recall is the problem,
+it is large, and it is invisible to every automatic check here.
+
+That is also the strongest evidence yet for an independent grader. The 58
+single-run findings printed by `compare.py` are exactly the set a human should
+adjudicate first, because each one is a miss by one side or an over-read by the
+other.
+
+### Three bugs these runs found in this repo
+
+Every one was mine, not a model's, and none was visible from the hand-made set:
+
+- **Reformatting read as fabrication.** Gemini joined a four-line `Session.new(...)`
+  call onto one line and grounding dropped it as invented. Code is now compared
+  with whitespace removed. The hand-made extractions were copy-pasted, so their
+  line breaks always matched and the bug never fired.
+- **A required field threw away correct work.** 19 records carrying exactly the
+  right `before` and `after` were binned for not setting `symbol`, which is
+  derivable from the `before` code. `symbol` is now optional.
+- **Language aliases counted as errors.** Models wrote `ts` and `js` where the
+  corpus said `typescript`; an exact-match guard called that five errors per run.
+  Aliases are now normalised.
+
+Running a second extractor was worth it for these alone, independent of which
+model scored better.
+
 ## Is this publishable?
 
 The harness is. The number is not.
@@ -110,8 +181,10 @@ reusable, and the finding they support — that guides are dense with things wor
 reporting and nearly empty of things safe to fix — rests on counting change kinds
 and routing them, which does not depend on who did the extracting.
 
-The **88/88** does. One model produced the extractions and designed the check
-that grades them, in one session, with no automated API run behind it. Grounding
+The **88/88** did, and the machine-made runs only partly fix it. Extraction is
+now reproducible, which removes one objection. But the same author still wrote
+the check that grades it, and the 60% cross-run agreement shows how little a
+perfect grounding score constrains accuracy. Grounding
 is blind to recall, as the v10 miss demonstrated at full strength, and blind to
 meaning: a symbol that appears in the guide but was never removed passes, and so
 does a correct quotation attached to the wrong claim. n=10, from three providers,

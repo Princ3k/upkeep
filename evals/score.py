@@ -21,6 +21,7 @@ scores perfectly. That needs an independent grader.
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -33,14 +34,21 @@ ROOT = Path(__file__).parent
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--dir", default="extractions",
+                        help="Which extraction set to score, relative to evals/.")
+    args = parser.parse_args()
+    extractions = ROOT / args.dir
+
     manifest = json.loads((ROOT / "corpus" / "manifest.json").read_text())
+    print(f"scoring: evals/{args.dir}\n")
     rows, fabrications, wrong_language = [], [], []
     totals = {"changes": 0, "grounded": 0, "kinds": {}}
 
     for entry in manifest["guides"]:
         stem = entry["file"][:-3]
         guide = (ROOT / "corpus" / entry["file"]).read_text()
-        extraction = ROOT / "extractions" / f"{stem}.json"
+        extraction = extractions / f"{stem}.json"
         if not extraction.exists():
             rows.append((stem, "-", "NO EXTRACTION", "", ""))
             continue
@@ -51,9 +59,12 @@ def main() -> int:
         for result in report.fabricated:
             fabrications.append((stem, result.label, result.missing))
 
+        from upkeep.models import normalise_language
+
+        expected = normalise_language(entry["language"])
         bad_language = [
             c for c in spec.changes
-            if getattr(c, "language", None) not in (None, entry["language"])
+            if normalise_language(getattr(c, "language", None)) not in (None, expected)
         ]
         wrong_language += [(stem, c.symbol, c.language) for c in bad_language]
 
@@ -98,7 +109,7 @@ def main() -> int:
     tiers: dict[str, int] = {}
     for entry in manifest["guides"]:
         stem = entry["file"][:-3]
-        extraction = ROOT / "extractions" / f"{stem}.json"
+        extraction = extractions / f"{stem}.json"
         if not extraction.exists():
             continue
         spec = MigrationSpec.model_validate_json(extraction.read_text())

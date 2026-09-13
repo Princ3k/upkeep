@@ -1,0 +1,34 @@
+{
+  "id": "shopify-api-js-9-10",
+  "provider": "shopify-api-js",
+  "from": "9",
+  "to": "10",
+  "severity": "breaking",
+  "effective": null,
+  "changes": [
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "shopify.config.scopes",
+      "language": "js",
+      "before": "const scopes = shopify.config.scopes.toString();",
+      "after": "const scopes = shopify.config.scopes ? shopify.config.scopes.toString() : '';",
+      "note": "Scopes on config object are now optional"
+    },
+    {
+      "kind": "field_renamed",
+      "path": "v10_lineItemBilling",
+      "to": "lineItemBilling",
+      "pending": false,
+      "inferred": false
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "WebhookValidationErrorReason.MissingHeaders",
+      "language": "ts",
+      "before": "if (\n  !check.valid &&\n  check.reason === WebhookValidationErrorReason.MissingHeaders &&\n  check.missingHeaders.includes(ShopifyHeader.Hmac)\n) {\n  // Handle error\n}",
+      "after": "if (!check.valid && check.reason === WebhookValidationErrorReason.MissingHmac) {\n  // Handle error\n}",
+      "note": "Webhook validation no longer returns MissingHeaders when HMAC header is missing, returning MissingHmac instead."
+    }
+  ],
+  "vectors": []
+}

@@ -1,0 +1,96 @@
+{
+  "id": "shopify-ruby-8-9",
+  "provider": "shopify-ruby",
+  "from": "8",
+  "to": "9",
+  "severity": "breaking",
+  "effective": null,
+  "changes": [
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::ApiVersion::Unstable",
+      "replacement": null,
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::ApiVersion::Release",
+      "replacement": null,
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::ApiVersion.define_version",
+      "replacement": null,
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": ".coerce_to_version",
+      "replacement": ".find_version",
+      "note": "deprecated. use .find_version"
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": ".define_known_versions",
+      "replacement": ".fetch_known_versions",
+      "note": "deprecated. Use .fetch_known_versions"
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": ".clear_defined_versions",
+      "replacement": ".clear_known_versions",
+      "note": "deprecated. Use. .clear_known_versions"
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": ".latest_stable_version",
+      "replacement": "ShopifyAPI::Meta.admin_versions.find(&:latest_supported)",
+      "note": "deprecated. Use ShopifyAPI::Meta.admin_versions.find(&:latest_supported) (this fetches info from Shopify servers. No authentication required.)"
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "#name",
+      "replacement": "#handle",
+      "note": "deprecated. Use #handle"
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "#stable?",
+      "replacement": "#supported?",
+      "note": "deprecated. Use #supported?"
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "ShopifyAPI::ApiVersion.version_lookup_mode",
+      "note": "By default, ShopifyAPI::ApiVersion.version_lookup_mode is :define_on_unknown. When setting the api_version on Session or Base, the api_version attribute takes a version handle (i.e. '2019-07' or :unstable) and sets an instance of ShopifyAPI::ApiVersion matching the handle."
+    },
+    {
+      "kind": "param_required_added",
+      "op": "ShopifyAPI::Session.new",
+      "param": "api_version",
+      "safe_default": null
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "ShopifyAPI::Session.new",
+      "language": "ruby",
+      "before": "ShopifyAPI::Session.new(domain, token, extras)",
+      "after": "ShopifyAPI::Session.new(domain: domain, token: token, api_version: api_version, extras: extras)",
+      "note": ""
+    },
+    {
+      "kind": "param_required_added",
+      "op": "ShopifyAPI::Session.temp",
+      "param": "api_version",
+      "safe_default": null
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "self.prefix =",
+      "replacement": "self.resource_prefix =",
+      "note": "The use of self.prefix = has been deprecated; you should now use self.resource = and not include /admin."
+    }
+  ],
+  "vectors": []
+}

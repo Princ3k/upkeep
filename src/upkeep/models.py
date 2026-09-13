@@ -7,6 +7,7 @@ one; everything downstream consumes one.
 
 from __future__ import annotations
 
+import re
 from enum import Enum
 from typing import Annotated, Any, Literal, Union
 
@@ -116,6 +117,27 @@ class SymbolRemoved(_Change):
         return parts[-1]
 
 
+LANGUAGE_ALIASES = {
+    "ts": "typescript", "tsx": "typescript", "js": "typescript",
+    "jsx": "typescript", "javascript": "typescript", "node": "typescript",
+    "py": "python", "rb": "ruby", "golang": "go", "cs": "csharp",
+}
+"""Spellings that mean the same thing to a call-site index.
+
+Real model output used `ts` and `js` where the corpus said `typescript`, and an
+exact-match guard read that as five wrong-language errors across two runs. They
+were not errors. JavaScript folds into TypeScript here because one indexer
+matches call sites in both.
+"""
+
+
+def normalise_language(language: str | None) -> str | None:
+    if language is None:
+        return None
+    key = language.strip().lower()
+    return LANGUAGE_ALIASES.get(key, key)
+
+
 class CallPatternChanged(_Change):
     """The call shape changed, shown as before-and-after code.
 
@@ -136,7 +158,16 @@ class CallPatternChanged(_Change):
     """
 
     kind: Literal["call_pattern_changed"] = "call_pattern_changed"
-    symbol: str
+    symbol: str | None = None
+    """The symbol whose call shape changed, when the guide names one.
+
+    Optional on purpose. A call pattern is defined by its before and after, and
+    requiring this separately threw away 19 correct extractions in one eval run
+    — records carrying exactly the right `before` and `after` and no `symbol`.
+    When it is absent, `leaf` falls back to the last dotted identifier in the
+    `before` code, which is what a call-site index can actually match on.
+    """
+
     language: str
     before: str
     after: str
@@ -144,6 +175,7 @@ class CallPatternChanged(_Change):
 
     @model_validator(mode="after")
     def _usable_as_an_example(self) -> "CallPatternChanged":
+        object.__setattr__(self, "language", normalise_language(self.language))
         if not self.before.strip():
             raise ValueError("a call pattern needs a `before` to match against")
         if not self.after.strip():
@@ -156,8 +188,19 @@ class CallPatternChanged(_Change):
         return self
 
     @property
-    def leaf(self) -> str:
-        parts = self.symbol.replace("#", ".").replace("::", ".").split(".")
+    def leaf(self) -> str | None:
+        """The bare identifier a call-site index matches on.
+
+        Derived from `before` when no symbol was given. Best effort: the last
+        dotted identifier in the old call is usually the thing that changed.
+        """
+        source = self.symbol
+        if not source:
+            matches = re.findall(r"[.\#]\s*([A-Za-z_][A-Za-z0-9_]*)", self.before)
+            if not matches:
+                return None
+            return matches[-1]
+        parts = source.replace("#", ".").replace("::", ".").split(".")
         return parts[-1]
 
 
@@ -228,7 +271,7 @@ class CallSite(BaseModel):
     """The identifier touched — an attribute name, dict key, or keyword arg."""
     expression: str
     language: str = "python"
-    """Which language this site is written in.
+    """Which language this site is written in, in canonical form.
 
     The indexer is libcst-only today so this is always Python, but a migration
     guide is written against one SDK in one language: without this, a Ruby

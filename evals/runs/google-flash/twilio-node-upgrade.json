@@ -1,0 +1,118 @@
+{
+  "id": "twilio-node-3-4",
+  "provider": "twilio-node",
+  "from": "3",
+  "to": "4",
+  "severity": "breaking",
+  "effective": null,
+  "changes": [
+    {
+      "kind": "semantics_changed",
+      "op": "Node.js support",
+      "note": "Upgrade to Node.js >= 14; Dropped support for Node.js < 14; Added support for Node.js 18"
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "Lazy loading",
+      "note": "Required Twilio modules now lazy load by default"
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "Response types",
+      "note": "Certain response properties now use the Record type with string keys, including the subresourceUris property for v2010 APIs and the links properties for non-v2010 APIs"
+    },
+    {
+      "kind": "param_required_added",
+      "op": "Creating an AccessToken",
+      "param": "identity",
+      "safe_default": null
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ConversationsGrant",
+      "replacement": "VoiceGrant",
+      "note": "ConversationsGrant has been deprecated in favor of VoiceGrant"
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "IpMessagingGrant",
+      "replacement": null,
+      "note": "IpMessagingGrant has been removed"
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Refer.referSip()",
+      "replacement": "Refer.sip()",
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssmlBreak()",
+      "replacement": "Say.break()",
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.break_()",
+      "replacement": "Say.break()",
+      "note": ""
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "Say.ssmlEmphasis",
+      "language": "js",
+      "before": "const response = new VoiceResponse();\nconst say = response.say(\"Hello\");\nsay.ssmlEmphasis(\"you\");",
+      "after": "const response = new VoiceResponse();\nconst say = response.say(\"Hello\");\nsay.emphasis(\"you\");",
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssmlLang()",
+      "replacement": "Say.lang()",
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssmlP()",
+      "replacement": "Say.p()",
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssmlPhoneme()",
+      "replacement": "Say.phoneme()",
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssmlProsody()",
+      "replacement": "Say.prosody()",
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssmlS()",
+      "replacement": "Say.s()",
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssmlSayAs()",
+      "replacement": "Say.sayAs()",
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssmlSub()",
+      "replacement": "Say.sub()",
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssmlW()",
+      "replacement": "Say.w()",
+      "note": ""
+    }
+  ],
+  "vectors": []
+}

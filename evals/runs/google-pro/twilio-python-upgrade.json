@@ -1,0 +1,96 @@
+{
+  "id": "twilio-python-7-8",
+  "provider": "twilio-python",
+  "from": "7",
+  "to": "8",
+  "severity": "breaking",
+  "effective": null,
+  "changes": [
+    {
+      "kind": "symbol_removed",
+      "symbol": "Refer.refer_sip()",
+      "replacement": "Refer.sip()",
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssml_break()",
+      "replacement": "Say.break_()",
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssml_emphasis()",
+      "replacement": "Say.emphasis()",
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssml_lang()",
+      "replacement": "Say.lang()",
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssml_p()",
+      "replacement": "Say.p()",
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssml_phoneme()",
+      "replacement": "Say.phoneme()",
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssml_prosody()",
+      "replacement": "Say.prosody()",
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssml_s()",
+      "replacement": "Say.s()",
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssml_say_as()",
+      "replacement": "Say.say_as()",
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssml_sub()",
+      "replacement": "Say.sub()",
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "Say.ssml_w()",
+      "replacement": "Say.w()",
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ConversationsGrant",
+      "replacement": "VoiceGrant",
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "IpMessagingGrant",
+      "replacement": null,
+      "note": ""
+    },
+    {
+      "kind": "field_renamed",
+      "path": "twilio.rest.api.v2010.account.available_phone_number",
+      "to": "twilio.rest.api.v2010.account.available_phone_number_country",
+      "pending": false,
+      "inferred": false
+    }
+  ],
+  "vectors": []
+}

@@ -1,0 +1,76 @@
+{
+  "id": "shopify-ruby-8-9",
+  "provider": "shopify-ruby",
+  "from": "8",
+  "to": "9",
+  "severity": "breaking",
+  "effective": null,
+  "changes": [
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::ApiVersion::Unstable",
+      "replacement": null,
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::ApiVersion::Release",
+      "replacement": null,
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::ApiVersion.define_version",
+      "replacement": null,
+      "note": ""
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "ShopifyAPI::ApiVersion.coerce_to_version",
+      "note": ".coerce_to_version deprecated. use .find_version"
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "ShopifyAPI::ApiVersion.define_known_versions",
+      "note": ".define_known_versions deprecated. Use .fetch_known_versions"
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "ShopifyAPI::ApiVersion.clear_defined_versions",
+      "note": ".clear_defined_versions deprecated. Use. .clear_known_versions"
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "ShopifyAPI::ApiVersion.latest_stable_version",
+      "note": ".latest_stable_version deprecated. Use ShopifyAPI::Meta.admin_versions.find(&:latest_supported)"
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "ShopifyAPI::ApiVersion#name",
+      "note": "#name deprecated. Use #handle"
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "ShopifyAPI::ApiVersion#stable?",
+      "note": "#stable? deprecated. Use #supported?"
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "ShopifyAPI::ApiVersion.version_lookup_mode",
+      "note": "Version 8.0.0 introduces a version lookup mode. By default, ShopifyAPI::ApiVersion.version_lookup_mode is :define_on_unknown."
+    },
+    {
+      "kind": "param_required_added",
+      "op": "ShopifyAPI::Session.new",
+      "param": "api_version",
+      "safe_default": null
+    },
+    {
+      "kind": "param_required_added",
+      "op": "ShopifyAPI::Session.temp",
+      "param": "api_version",
+      "safe_default": null
+    }
+  ],
+  "vectors": []
+}

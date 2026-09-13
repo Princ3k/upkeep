@@ -120,8 +120,10 @@ def _language_matches(change: Change, site: CallSite) -> bool:
     Changes carrying no language describe the API surface itself (a renamed JSON
     field, a removed endpoint) and apply to every consumer regardless.
     """
-    language = getattr(change, "language", None)
-    return language is None or language == site.language
+    from upkeep.models import normalise_language
+
+    language = normalise_language(getattr(change, "language", None))
+    return language is None or language == normalise_language(site.language)
 
 
 def _affects(change: Change, site: CallSite) -> bool:
@@ -130,7 +132,8 @@ def _affects(change: Change, site: CallSite) -> bool:
     if isinstance(change, FieldRenamed):
         return site.name == change.old_name
     if isinstance(change, (SymbolRemoved, CallPatternChanged)):
-        return site.name == change.leaf
+        leaf = change.leaf
+        return leaf is not None and site.name == leaf
     if isinstance(change, SemanticsChanged):
         return site.name == change.op.rsplit(".", 1)[-1]
     if site.kind is not SiteKind.call:

@@ -1,0 +1,92 @@
+{
+  "id": "shopify-ruby-9-10",
+  "provider": "shopify-ruby",
+  "from": "9",
+  "to": "10",
+  "severity": "breaking",
+  "effective": null,
+  "changes": [
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::Base",
+      "replacement": null,
+      "note": "The ShopifyAPI::Base class has been removed. Global configuration is now handled via ShopifyAPI::Context.setup."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::Base.activate_session",
+      "replacement": "ShopifyAPI::Context.activate_session",
+      "note": ""
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "Session Management",
+      "note": "Removal of support for 3rd party cookies; introduction of session tokens and authenticatedFetch for authentication."
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "GraphQL client",
+      "note": "Deprecated the dependency of graphql-client gem. No longer need to dump schema to a local JSON file."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "ShopifyAPI::GraphQL",
+      "language": "ruby",
+      "before": "ShopifyAPI::Base.api_version = \"2023-04\"\nclient = ShopifyAPI::GraphQL.client\n\nSHOP_NAME_QUERY = client.parse <<-'GRAPHQL'\n  {\n    shop {\n      name\n    }\n  }\nGRAPHQL\n\nresult = client.query(SHOP_NAME_QUERY)\nshop_name = result.data.shop.name",
+      "after": "client = ShopifyAPI::Clients::Graphql::Admin.new(session: session, api_version: \"2023-04\")\n\nSHOP_NAME_QUERY =<<~QUERY\n  {\n    shop {\n      name\n    }\n  }\nQUERY\n\nresponse = client.query(query: query)\nshop_name = response.body[\"data\"][\"shop\"][\"name\"]",
+      "note": "Existing query and response parsing must be refactored to use new GraphQL HTTP Client classes."
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "REST resources",
+      "note": "The use of ActiveResource has been deprecated. REST API requests must now use auto-generated, version-specific resources."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "Order.find",
+      "language": "ruby",
+      "before": "Order.find(:all, params: {financial_status: \"partially_paid\"})",
+      "after": "Order.all(financial_status: \"partially_paid\")",
+      "note": ""
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "Order.find",
+      "language": "ruby",
+      "before": "Order.find(<id>)",
+      "after": "Order.find(id: <id>)",
+      "note": ""
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "Order#save",
+      "language": "ruby",
+      "before": "order = Order.find<id>\norder.fulfillment_status = \"fulfilled\"\norder.note = \"Fulfilled on September 6, 2023\"\norder.save",
+      "after": "order = Order.find(id: <id>)\norder.fulfillment_status = \"fulfilled\"\norder.note = \"Fulfilled on September 6, 2023\"\norder.save!",
+      "note": "Updates to resources now use bang methods for persistence."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "Order#post",
+      "language": "ruby",
+      "before": "order = Order.new(<id>)\norder.post(:close)",
+      "after": "order = Order.find(id: <id>)\norder.close",
+      "note": ""
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "Order#delete",
+      "language": "ruby",
+      "before": "order = Order.new(<id>)\norder.delete",
+      "after": "Order.delete(id: <id>)",
+      "note": "Deletion has moved from an instance method to a class method."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "order.transactions",
+      "replacement": null,
+      "note": "Helper methods for resource connections that are not direct properties in the REST API (like transactions on Order) are no longer supported."
+    }
+  ],
+  "vectors": []
+}

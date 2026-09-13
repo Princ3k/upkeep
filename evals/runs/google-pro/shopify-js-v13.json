@@ -1,0 +1,72 @@
+{
+  "id": "shopify-api-js-12-13",
+  "provider": "shopify-api-js",
+  "from": "12",
+  "to": "13",
+  "severity": "breaking",
+  "effective": null,
+  "changes": [
+    {
+      "kind": "symbol_removed",
+      "symbol": "ApiVersion.October22",
+      "replacement": null,
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ApiVersion.January23",
+      "replacement": null,
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ApiVersion.April23",
+      "replacement": null,
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ApiVersion.July23",
+      "replacement": null,
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ApiVersion.October23",
+      "replacement": null,
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ApiVersion.January24",
+      "replacement": null,
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ApiVersion.April24",
+      "replacement": null,
+      "note": ""
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ApiVersion.July24",
+      "replacement": null,
+      "note": ""
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "shopifyApi",
+      "language": "ts",
+      "before": "// Before\nimport {shopifyApi, ApiVersion} from '@shopify/shopify-api';\nimport {restResources} from '@shopify/shopify-api/rest/admin/2023-04';\n\nconst shopify = shopifyApi({\n  // ...\n  apiVersion: ApiVersion.April23,\n  restResources,\n});",
+      "after": "// After\nimport {shopifyApi, ApiVersion} from '@shopify/shopify-api';\nimport {restResources} from '@shopify/shopify-api/rest/admin/2026-01';\n\nconst shopify = shopifyApi({\n  // ...\n  apiVersion: ApiVersion.January26,\n  restResources,\n});",
+      "note": "If your app uses one of the removed versions, update to a supported version:"
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "REST resource imports",
+      "note": "REST resource directories for the removed versions have been deleted. Update your import path to match your configured `apiVersion`"
+    }
+  ],
+  "vectors": []
+}

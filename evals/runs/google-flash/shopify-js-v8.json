@@ -1,0 +1,62 @@
+{
+  "id": "shopify-api-js-7-8",
+  "provider": "shopify-api-js",
+  "from": "7",
+  "to": "8",
+  "severity": "breaking",
+  "effective": null,
+  "changes": [
+    {
+      "kind": "semantics_changed",
+      "op": "Node.js 14",
+      "note": "We are removing support for Node 14 because: Node 14 has not been actively supported by Node since October 2021, Node 14 has reached its EOL in February 2023. If you're running on Node 14, you'll need to upgrade to at least Node 16 before you can upgrade this package."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "shopify.clients.Storefront",
+      "language": "typescript",
+      "before": "const storefrontClient = new shopify.clients.Storefront({\n    domain: session.shop,\n    storefrontAccessToken,\n    apiVersion: ApiVersion.January23,\n  });",
+      "after": "const client = new shopify.clients.Storefront({\n    session,\n    apiVersion: ApiVersion.January23,\n  });",
+      "note": "Since this package now supports private tokens properly, we're deprecating the domain and storefrontAccessToken fields when creating a Storefront client, in favour of using the same session other clients use."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "Shopify",
+      "language": "typescript",
+      "before": "const myVariable: Shopify<typeof restResources>;",
+      "after": "const myVariable: Shopify<ConfigParams, typeof restResources>;",
+      "note": "we changed the Shopify type to also receive the config as a generic type, and infer the restResources from the config."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "2022-04",
+      "replacement": null,
+      "note": "As per Shopify's API release schedule, we support the last 4 versions of the API. To match the API, this library no longer supports versions 2022-04 and 2022-07."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "2022-07",
+      "replacement": null,
+      "note": "As per Shopify's API release schedule, we support the last 4 versions of the API. To match the API, this library no longer supports versions 2022-04 and 2022-07."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "privateMetafieldNamespaces",
+      "replacement": null,
+      "note": "Removed support for the privateMetafieldNamespaces field in webhooks."
+    },
+    {
+      "kind": "param_required_added",
+      "op": "shopifyApi",
+      "param": "adminApiAccessToken",
+      "safe_default": null
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "v5 types",
+      "replacement": null,
+      "note": "Removed deprecated v5 types."
+    }
+  ],
+  "vectors": []
+}

@@ -72,10 +72,10 @@ def main() -> int:
 
     backend_cls = BACKENDS[args.provider]
     backend = backend_cls(model=args.model) if args.model else backend_cls()
-    print(f"  backend: {backend.name} / {backend.model}\n")
+    print(f"  backend: {backend.name} / {backend.model}\n", flush=True)
 
     out_dir = ROOT / (args.out or "extractions")
-    out_dir.mkdir(exist_ok=True)
+    out_dir.mkdir(parents=True, exist_ok=True)
     dropped_total = 0
 
     for entry in guides:
@@ -99,7 +99,7 @@ def main() -> int:
         if result.malformed:
             notes.append(f"{result.malformed} malformed")
         flag = f"   ({', '.join(notes)})" if notes else ""
-        print(f"  {stem:<26} {len(result.spec.changes):>3} changes{flag}")
+        print(f"  {stem:<26} {len(result.spec.changes):>3} changes{flag}", flush=True)
         for dropped in result.grounding.fabricated:
             print(f"      dropped {dropped.label}: {dropped.missing[:1]}")
 

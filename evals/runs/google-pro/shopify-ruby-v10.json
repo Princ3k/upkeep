@@ -1,0 +1,45 @@
+{
+  "id": "shopify-ruby-9-10",
+  "provider": "shopify-ruby",
+  "from": "9",
+  "to": "10",
+  "severity": "breaking",
+  "effective": null,
+  "changes": [
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::Base",
+      "replacement": null,
+      "note": "ShopifyAPI::Base class has been removed."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::Base.api_version",
+      "replacement": "ShopifyAPI::Context.setup",
+      "note": "API request version previously set by ShopifyAPI::Base.api_version, now configured in ShopifyAPI::Context.setup."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::Base.header",
+      "replacement": "ShopifyAPI::Clients::HttpRequest",
+      "note": "Previously used to set User-Agent and custom headers. Now configured via ShopifyAPI::Context.setup and ShopifyAPI::Clients::HttpRequest."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::Base.activate_session",
+      "replacement": "ShopifyAPI::Context.activate_session",
+      "note": ""
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "Dependencies",
+      "note": "Deprecated the dependency of graphql-client and ActiveResource gems. REST and GraphQL requests must be refactored to use the new client classes."
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "Resource connections",
+      "note": "Helper methods to load related resource connections (like order.transactions) are no longer supported unless the connected property is explicitly listed in the REST API."
+    }
+  ],
+  "vectors": []
+}

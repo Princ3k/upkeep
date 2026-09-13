@@ -1,0 +1,53 @@
+{
+  "id": "shopify-ruby-14-15",
+  "provider": "shopify-ruby",
+  "from": "14",
+  "to": "15",
+  "severity": "breaking",
+  "effective": null,
+  "changes": [
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "ShopifyAPI::Clients::Graphql::Storefront.new",
+      "language": "ruby",
+      "before": "# Old way: passing token as positional parameter\nclient = ShopifyAPI::Clients::Graphql::Storefront.new(shop_url, storefront_access_token)\n\n# With API version\nclient = ShopifyAPI::Clients::Graphql::Storefront.new(shop_url, storefront_access_token, api_version: \"2024-01\")",
+      "after": "# Use private token (recommended)\nclient = ShopifyAPI::Clients::Graphql::Storefront.new(shop_url, private_token: storefront_private_access_token)\n\n# Or use public token\nclient = ShopifyAPI::Clients::Graphql::Storefront.new(shop_url, public_token: storefront_public_access_token)\n\n# With API version\nclient = ShopifyAPI::Clients::Graphql::Storefront.new(\n  shop_url,\n  private_token: storefront_private_access_token,\n  api_version: \"2024-01\"\n)",
+      "note": "The `ShopifyAPI::Clients::Graphql::Storefront` class no longer accepts the public Storefront access token as a positional parameter. You must now use the named parameters `private_token:` or `public_token:` instead."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::LATEST_SUPPORTED_ADMIN_VERSION",
+      "replacement": null,
+      "note": "The LATEST_SUPPORTED_ADMIN_VERSION and RELEASE_CANDIDATE_ADMIN_VERSION constants have been removed to prevent semantic versioning (semver) breaking changes."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::RELEASE_CANDIDATE_ADMIN_VERSION",
+      "replacement": null,
+      "note": "The LATEST_SUPPORTED_ADMIN_VERSION and RELEASE_CANDIDATE_ADMIN_VERSION constants have been removed to prevent semantic versioning (semver) breaking changes."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "ShopifyAPI::Context.setup",
+      "language": "ruby",
+      "before": "# Before (v14 and earlier)\nShopifyAPI::Context.setup(\n  api_key: \"<api-key>\",\n  api_secret_key: \"<api-secret-key>\",\n  host: \"<https://application-host-name.com>\",\n  scope: \"read_orders,read_products,etc\",\n  is_embedded: true,\n  api_version: ShopifyAPI::LATEST_SUPPORTED_ADMIN_VERSION, # This constant no longer exists\n  is_private: false,\n)",
+      "after": "# After (v15+)\nShopifyAPI::Context.setup(\n  api_key: \"<api-key>\",\n  api_secret_key: \"<api-secret-key>\",\n  host: \"<https://application-host-name.com>\",\n  scope: \"read_orders,read_products,etc\",\n  is_embedded: true,\n  api_version: \"2025-07\", # Explicitly specify the version\n  is_private: false,\n)",
+      "note": "You must now explicitly specify which API version you want to use."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::Webhooks::Handler",
+      "replacement": "ShopifyAPI::Webhooks::WebhookHandler",
+      "note": "The `ShopifyAPI::Webhooks::Handler` class has been removed in favor of `ShopifyAPI::Webhooks::WebhookHandler`."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "ShopifyAPI::Webhooks::Handler#handle",
+      "language": "ruby",
+      "before": "module WebhookHandler\n  include ShopifyAPI::Webhooks::Handler\n\n  class << self\n    def handle(topic:, shop:, body:)\n      puts \"Received webhook! topic: #{topic} shop: #{shop} body: #{body}\"\n    end\n  end\nend",
+      "after": "module WebhookHandler\n  extend ShopifyAPI::Webhooks::WebhookHandler\n\n  class << self\n    def handle(data:)\n      puts \"Received webhook! topic: #{data.topic} shop: #{data.shop} body: #{data.body} webhook_id: #{data.webhook_id} api_version: #{data.api_version}\"\n    end\n  end\nend",
+      "note": "Make a module or class that includes or extends `ShopifyAPI::Webhooks::WebhookHandler` and implement the `handle` method which accepts the named parameter data: `WebhookMetadata`."
+    }
+  ],
+  "vectors": []
+}

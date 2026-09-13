@@ -1,0 +1,36 @@
+{
+  "id": "shopify-ruby-15-16",
+  "provider": "shopify-ruby",
+  "from": "15",
+  "to": "16",
+  "severity": "breaking",
+  "effective": null,
+  "changes": [
+    {
+      "kind": "semantics_changed",
+      "op": "Minimum Ruby Version Requirement",
+      "note": "The minimum required Ruby version has been updated from 3.0 to 3.2."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::Auth::Session#serialize",
+      "replacement": "Session.new()",
+      "note": "The Session#serialize and Session.deserialize methods have been removed due to a security vulnerability. The deserialize method used Oj.load without safe mode, which allows instantiation of arbitrary Ruby objects."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::Auth::Session.deserialize",
+      "replacement": "Session.new()",
+      "note": "The Session#serialize and Session.deserialize methods have been removed due to a security vulnerability. The deserialize method used Oj.load without safe mode, which allows instantiation of arbitrary Ruby objects."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "ShopifyAPI::Auth::Session",
+      "language": "ruby",
+      "before": "# Storing a session\nsession = ShopifyAPI::Auth::Session.new(\n  shop: \"example.myshopify.com\",\n  access_token: \"shpat_xxxxx\",\n  scope: \"read_products,write_orders\"\n)\n\nserialized_data = session.serialize\n# Store serialized_data in Redis, database, etc.\nredis.set(\"session:#{session.id}\", serialized_data)\n\n# Retrieving a session\nserialized_data = redis.get(\"session:#{session_id}\")\nsession = ShopifyAPI::Auth::Session.deserialize(serialized_data)",
+      "after": "# Stores attributes in database columns\ndef store(auth_session)\n  shop = find_or_initialize_by(shopify_domain: auth_session.shop)\n  shop.shopify_token = auth_session.access_token\n  shop.save!\nend\n\n# Reconstructs using Session.new()\ndef retrieve(id)\n  shop = find_by(id: id)\n  return unless shop\n\n  ShopifyAPI::Auth::Session.new(\n    shop: shop.shopify_domain,\n    access_token: shop.shopify_token\n  )\nend",
+      "note": "If your application was using Session#serialize and Session.deserialize for session persistence, you'll need to refactor to store individual session attributes and reconstruct sessions using Session.new()."
+    }
+  ],
+  "vectors": []
+}

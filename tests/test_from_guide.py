@@ -150,3 +150,27 @@ def test_the_issue_reports_pattern_rewrites_not_just_escalations():
     assert "Session.deserialize(serialized_data)" in body   # the guide's before
     assert "Session.new(" in body                           # and its after
     assert "```ruby" in body
+
+
+def test_language_aliases_are_normalised():
+    """Real model output wrote `ts` and `js` where the corpus said `typescript`.
+    An exact-match guard called that five errors across two runs; it was none."""
+    from upkeep.models import CallPatternChanged
+
+    for spelling in ("ts", "TS", "js", "javascript", "TypeScript"):
+        change = CallPatternChanged(language=spelling, before="a.old()", after="a.new()")
+        assert change.language == "typescript", spelling
+
+
+def test_a_typescript_pattern_matches_a_javascript_call_site():
+    """One indexer handles both, so the guard must not split them."""
+    from upkeep.models import CallPatternChanged, MigrationSpec
+
+    spec = MigrationSpec(
+        id="x", provider="p", **{"from": "1", "to": "2"}, severity=Severity.breaking,
+        vectors=["v"],
+        changes=[CallPatternChanged(language="ts", before="x.old()", after="x.new()")],
+    )
+    site = CallSite(file="a.js", line=1, column=0, kind=SiteKind.attribute,
+                    name="old", expression="x.old", rooted=True, language="js")
+    assert len(plan(spec, [site])) == 1

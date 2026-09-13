@@ -115,7 +115,10 @@ def to_change(flat: FlatChange) -> Change | None:
     if flat.kind == "call_pattern_changed":
         # The validator rejects an empty or identical example; a backend that
         # produced one made a malformed record, not a usable change.
-        if not (flat.symbol and flat.language and flat.before and flat.after):
+        # `symbol` is optional: the pattern is the before/after pair. Demanding
+        # it here discarded correct extractions whose only fault was an unset
+        # field the model had no reason to fill.
+        if not (flat.language and flat.before and flat.after):
             return None
         try:
             return CallPatternChanged(

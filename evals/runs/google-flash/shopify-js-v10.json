@@ -1,0 +1,39 @@
+{
+  "id": "shopify-api-js-9-10",
+  "provider": "shopify-api-js",
+  "from": "9",
+  "to": "10",
+  "severity": "breaking",
+  "effective": null,
+  "changes": [
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "shopify.config.scopes",
+      "language": "js",
+      "before": "const scopes = shopify.config.scopes.toString();",
+      "after": "const scopes = shopify.config.scopes ? shopify.config.scopes.toString() : '';",
+      "note": "The scopes property on the config object is now optional. If your app is using the new managed install flow, it is now recommended you omit the scopes property from the config object."
+    },
+    {
+      "kind": "field_renamed",
+      "path": "v10_lineItemBilling",
+      "to": "lineItemBilling",
+      "pending": false,
+      "inferred": false
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "shopify.webhooks.validate",
+      "language": "ts",
+      "before": "if (\n  !check.valid &&\n  check.reason === WebhookValidationErrorReason.MissingHeaders &&\n  check.missingHeaders.includes(ShopifyHeader.Hmac)\n) {\n  // Handle error\n}",
+      "after": "if (!check.valid && check.reason === WebhookValidationErrorReason.MissingHmac) {\n  // Handle error\n}",
+      "note": "Webhook validation will now return a different reason value when the HMAC value is missing from the request. Instead of returning WebhookValidationErrorReason.MissingHeaders as it does for the other headers it validates, it will now return a new WebhookValidationErrorReason.MissingHmac error so this check matches other HMAC validations."
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "Internal build paths",
+      "note": "We started exporting both CJS and ESM outputs in this version, which affected how we export the files from the package internally. While this should have no effect on most apps, if you're directly importing a file from the package, its path will have changed."
+    }
+  ],
+  "vectors": []
+}

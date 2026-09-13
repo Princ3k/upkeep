@@ -1,0 +1,16 @@
+{
+  "id": "shopify-api-js-10-11",
+  "provider": "shopify-api-js",
+  "from": "10",
+  "to": "11",
+  "severity": "breaking",
+  "effective": null,
+  "changes": [
+    {
+      "kind": "semantics_changed",
+      "op": "Node.js support",
+      "note": "The main reason for this release was to remove support for Node 16 so we can continue to evolve this package."
+    }
+  ],
+  "vectors": []
+}
