@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>upkeep · live extraction</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#EEF2F1; --surface:#FCFDFD; --surface-2:#E4EAE9; --raised:#fff;
+  --ink:#12201F; --ink-2:#54615F; --ink-3:#7B8886; --rule:#D1D9D8; --rule-2:#B4C0BE;
+  --accent:#0E6E63; --accent-soft:#DBEAE7; --accent-ink:#0A554C; --on-accent:#fff;
+  --ok:#2F6B3A; --ok-bg:#E0EFE3; --no:#A8322B; --no-bg:#F6E4E2;
+  --warn:#8A5806; --warn-bg:#F6EBD9;
+  --k-pat:#1C5C86; --k-pat-bg:#DEEBF4;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --bg:#0E1413; --surface:#171F1E; --surface-2:#1F2827; --raised:#1C2524;
+  --ink:#E4EAE9; --ink-2:#95A3A0; --ink-3:#71807D; --rule:#28322F; --rule-2:#3A4644;
+  --accent:#57C6B4; --accent-soft:#14302C; --accent-ink:#7FD8C9; --on-accent:#0E1413;
+  --ok:#7FCE92; --ok-bg:#17281B; --no:#EB8C82; --no-bg:#2C1A19;
+  --warn:#DCA94C; --warn-bg:#2B2314;
+  --k-pat:#72B6DE; --k-pat-bg:#152632;
+}}
+:root[data-theme=dark]{
+  --bg:#0E1413; --surface:#171F1E; --surface-2:#1F2827; --raised:#1C2524;
+  --ink:#E4EAE9; --ink-2:#95A3A0; --ink-3:#71807D; --rule:#28322F; --rule-2:#3A4644;
+  --accent:#57C6B4; --accent-soft:#14302C; --accent-ink:#7FD8C9; --on-accent:#0E1413;
+  --ok:#7FCE92; --ok-bg:#17281B; --no:#EB8C82; --no-bg:#2C1A19;
+  --warn:#DCA94C; --warn-bg:#2B2314;
+  --k-pat:#72B6DE; --k-pat-bg:#152632;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Archivo,system-ui,sans-serif;
+  font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.mono,code{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:18px;padding-block:0 60px}
+header{padding-block:24px 18px;border-bottom:1px solid var(--rule);margin-bottom:20px}
+.eyebrow{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--ink-3);margin:0 0 6px}
+h1{margin:0 0 6px;font-size:24px;font-weight:600;letter-spacing:-.015em}
+.sub{margin:0;color:var(--ink-2);max-width:66ch}
+
+.grid{display:grid;grid-template-columns:290px minmax(0,1fr);gap:18px;align-items:start}
+@media(max-width:820px){.grid{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:7px;padding:16px}
+.card h2{margin:0 0 12px;font-size:11px;font-family:"JetBrains Mono",monospace;
+  letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+
+label{display:block;font-size:12px;color:var(--ink-2);margin:0 0 5px;font-weight:500}
+select,input[type=number],input[type=text]{width:100%;font:inherit;font-size:13px;
+  padding:7px 9px;border:1px solid var(--rule-2);border-radius:5px;
+  background:var(--raised);color:var(--ink);margin-bottom:12px}
+select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px}
+.guides{max-height:190px;overflow:auto;border:1px solid var(--rule-2);border-radius:5px;
+  padding:7px 9px;background:var(--raised);margin-bottom:12px}
+.guides label{display:flex;gap:8px;align-items:center;font-family:"JetBrains Mono",monospace;
+  font-size:11.5px;margin:0;padding:3px 0;cursor:pointer;color:var(--ink)}
+.guides input{margin:0;accent-color:var(--accent)}
+.mini{display:flex;gap:6px;margin-bottom:12px}
+.mini button{flex:1;font:inherit;font-size:11px;padding:4px;border-radius:4px;
+  border:1px solid var(--rule-2);background:var(--raised);color:var(--ink-2);cursor:pointer}
+.mini button:hover{border-color:var(--accent);color:var(--ink)}
+button.go{width:100%;font:inherit;font-size:14px;font-weight:600;padding:10px;
+  border:0;border-radius:6px;background:var(--accent);color:var(--on-accent);cursor:pointer}
+button.go:disabled{opacity:.5;cursor:not-allowed}
+button.go:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.cost{font-size:12px;color:var(--ink-3);margin-top:9px;text-align:center}
+.keywarn{background:var(--warn-bg);color:var(--warn);border-radius:5px;padding:9px 11px;
+  font-size:12px;margin-bottom:12px;line-height:1.45}
+
+.bar{height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden;margin-bottom:14px}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .2s}
+.status{display:flex;gap:14px;flex-wrap:wrap;align-items:baseline;margin-bottom:12px;
+  font-size:12.5px;color:var(--ink-2)}
+.status b{color:var(--ink);font-variant-numeric:tabular-nums}
+
+.feed{display:flex;flex-direction:column;gap:8px;max-height:460px;overflow:auto;
+  padding-right:4px}
+.row{border:1px solid var(--rule);border-radius:6px;padding:10px 12px;background:var(--raised)}
+.row.pending{opacity:.6;border-style:dashed}
+.row.err{border-color:var(--no);background:var(--no-bg)}
+.row-top{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.name{font-family:"JetBrains Mono",monospace;font-size:12.5px;font-weight:500}
+.pass{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--ink-3)}
+.count{margin-left:auto;font-family:"JetBrains Mono",monospace;font-size:13px;
+  font-variant-numeric:tabular-nums;font-weight:500}
+.kinds{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.chip{font-family:"JetBrains Mono",monospace;font-size:10px;padding:2px 6px;border-radius:3px;
+  background:var(--surface-2);color:var(--ink-2)}
+.chip.pat{background:var(--k-pat-bg);color:var(--k-pat)}
+.chip.bad{background:var(--no-bg);color:var(--no)}
+.drop{margin-top:8px;padding:8px 10px;border-radius:4px;background:var(--no-bg);
+  color:var(--no);font-size:11.5px;line-height:1.45}
+.drop code{font-size:10.5px;word-break:break-all}
+.spinner{width:11px;height:11px;border:2px solid var(--rule-2);border-top-color:var(--accent);
+  border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+table{border-collapse:collapse;width:100%;font-size:12.5px;margin-top:6px}
+th{text-align:left;font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink-3);font-weight:500;padding:8px 10px;
+  border-bottom:1px solid var(--rule-2)}
+td{padding:8px 10px;border-bottom:1px solid var(--rule)}
+td.n,th.n{text-align:right;font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
+td.g{font-family:"JetBrains Mono",monospace;font-size:11.5px}
+.hot{color:var(--no);font-weight:600}
+.empty{color:var(--ink-3);padding:26px 10px;text-align:center}
+.varnote{font-size:12.5px;color:var(--ink-2);margin:10px 0 0;line-height:1.5}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <p class="eyebrow">upkeep · evals</p>
+  <h1>Live extraction</h1>
+  <p class="sub">Watch a run arrive guide by guide, with anything dropped as ungrounded shown
+  where it happens. Set repeats above 1 to measure variance — a single pass per extractor
+  turned out not to be enough to compare two of them.</p>
+</header>
+
+<div class="grid">
+  <div class="card" id="config">
+    <h2>Configuration</h2>
+    <div id="keywarn"></div>
+    <label for="provider">Backend</label>
+    <select id="provider"></select>
+    <label for="model">Model <span style="color:var(--ink-3)">(blank = default)</span></label>
+    <input type="text" id="model" placeholder="gemini-3.1-pro-preview">
+    <label for="repeat">Repeats</label>
+    <input type="number" id="repeat" min="1" max="10" value="1">
+    <label>Guides</label>
+    <div class="mini">
+      <button type="button" id="all">All</button>
+      <button type="button" id="none">None</button>
+      <button type="button" id="dense">Code-dense</button>
+    </div>
+    <div class="guides" id="guides"></div>
+    <button class="go" id="go">Run</button>
+    <p class="cost" id="cost"></p>
+  </div>
+
+  <div>
+    <div class="card" style="margin-bottom:16px">
+      <h2>Progress</h2>
+      <div class="bar"><i id="bar"></i></div>
+      <div class="status" id="status"><span>Idle — configure a run and press Run.</span></div>
+      <div class="feed" id="feed"></div>
+    </div>
+    <div class="card" id="spread-card" hidden>
+      <h2>Variance across repeats</h2>
+      <div id="spread"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var CFG = null, source = null, expected = 0, seen = 0, totals = {changes:0, dropped:0, malformed:0};
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+  fetch("/api/config").then(function (r) { return r.json(); }).then(function (c) {
+    CFG = c;
+    // Default to a backend that actually has a credential, so the page opens
+    // ready to run rather than disabled behind a warning.
+    var usable = c.providers.filter(function (p) { return c.keys && c.keys[p]; });
+    var preferred = usable.length ? usable[0] : c.providers[0];
+    $("provider").innerHTML = c.providers.map(function (p) {
+      return '<option value="' + esc(p) + '"' + (p === preferred ? " selected" : "") +
+        ">" + esc(p) + (c.keys && c.keys[p] ? "" : " (no key)") + "</option>";
+    }).join("");
+    $("guides").innerHTML = c.guides.map(function (g) {
+      return '<label><input type="checkbox" value="' + esc(g.stem) + '" checked>' +
+        esc(g.stem) + "</label>";
+    }).join("");
+    checkKey();
+    updateCost();
+  });
+
+  function selected() {
+    return Array.prototype.slice.call($("guides").querySelectorAll("input:checked"))
+      .map(function (i) { return i.value; });
+  }
+  function checkKey() {
+    var p = $("provider").value;
+    var has = CFG && CFG.keys && CFG.keys[p];
+    $("keywarn").innerHTML = has ? "" :
+      '<div class="keywarn">No credential found for <b>' + esc(p) + '</b>. Set ' +
+      (p === "google" ? "<code>GEMINI_API_KEY</code>" : "<code>ANTHROPIC_API_KEY</code>") +
+      " in the shell that runs the server, then reload.</div>";
+    $("go").disabled = !has || selected().length === 0;
+  }
+  function updateCost() {
+    var n = selected().length * Math.max(1, Number($("repeat").value) || 1);
+    var per = $("provider").value === "google" ? 0.03 : 0.09;
+    $("cost").textContent = n + " extraction" + (n === 1 ? "" : "s") +
+      " · roughly $" + (n * per).toFixed(2) + ". This spends real money.";
+  }
+  ["provider", "repeat"].forEach(function (id) {
+    $(id).addEventListener("change", function () { checkKey(); updateCost(); });
+  });
+  $("guides").addEventListener("change", function () { checkKey(); updateCost(); });
+  $("all").onclick = function () { setAll(true); };
+  $("none").onclick = function () { setAll(false); };
+  $("dense").onclick = function () {
+    var dense = ["shopify-ruby-older", "shopify-ruby-v10", "twilio-python-upgrade"];
+    Array.prototype.forEach.call($("guides").querySelectorAll("input"), function (i) {
+      i.checked = dense.indexOf(i.value) !== -1;
+    });
+    checkKey(); updateCost();
+  };
+  function setAll(on) {
+    Array.prototype.forEach.call($("guides").querySelectorAll("input"), function (i) {
+      i.checked = on;
+    });
+    checkKey(); updateCost();
+  }
+
+  $("go").onclick = function () {
+    $("go").disabled = true;
+    $("feed").innerHTML = "";
+    $("spread-card").hidden = true;
+    seen = 0; totals = {changes:0, dropped:0, malformed:0};
+    fetch("/api/run", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        provider: $("provider").value,
+        model: $("model").value.trim() || null,
+        repeat: Number($("repeat").value) || 1,
+        guides: selected(),
+      }),
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      if (d.error) { status("Failed: " + d.error); $("go").disabled = false; return; }
+      connect(d.run);
+    });
+  };
+
+  function status(html) { $("status").innerHTML = html; }
+
+  function connect(runId) {
+    if (source) source.close();
+    source = new EventSource("/api/events?run=" + encodeURIComponent(runId));
+    source.onmessage = function (e) { handle(JSON.parse(e.data)); };
+    source.onerror = function () { /* the server closes the stream when done */ };
+  }
+
+  function handle(ev) {
+    if (ev.type === "start") {
+      expected = ev.total;
+      status("<span>Running <b>" + esc(ev.model) + "</b></span>" +
+             "<span><b>0</b> / " + expected + " extractions</span>" +
+             "<span><b>0</b> changes</span>");
+    } else if (ev.type === "guide_start") {
+      var row = document.createElement("div");
+      row.className = "row pending";
+      row.id = "r-" + ev.index;
+      row.innerHTML = '<div class="row-top"><span class="spinner"></span>' +
+        '<span class="name">' + esc(ev.guide) + "</span>" +
+        (ev.pass > 1 ? '<span class="pass">pass ' + ev.pass + "</span>" : "") + "</div>";
+      $("feed").prepend(row);
+    } else if (ev.type === "guide_done") {
+      seen++;
+      totals.changes += ev.changes;
+      totals.dropped += ev.dropped;
+      totals.malformed += ev.malformed;
+      var row = $("r-" + ev.index) || document.createElement("div");
+      row.className = "row";
+      var kinds = Object.keys(ev.kinds).sort().map(function (k) {
+        return '<span class="chip' + (k === "call_pattern_changed" ? " pat" : "") + '">' +
+          esc(k) + " " + ev.kinds[k] + "</span>";
+      }).join("");
+      var drops = (ev.drops || []).map(function (d) {
+        return '<div class="drop"><b>dropped ' + esc(d.label) + "</b> — not found in the " +
+          "source:<br><code>" + esc((d.missing[0] || "").slice(0, 160)) + "</code></div>";
+      }).join("");
+      row.innerHTML = '<div class="row-top"><span class="name">' + esc(ev.guide) + "</span>" +
+        (ev.pass > 1 ? '<span class="pass">pass ' + ev.pass + "</span>" : "") +
+        (ev.malformed ? '<span class="chip bad">' + ev.malformed + " malformed</span>" : "") +
+        '<span class="count">' + ev.changes + "</span></div>" +
+        '<div class="kinds">' + kinds + "</div>" + drops;
+      updateProgress();
+    } else if (ev.type === "guide_error") {
+      seen++;
+      var er = $("r-" + ev.index) || document.createElement("div");
+      er.className = "row err";
+      er.innerHTML = '<div class="row-top"><span class="name">' + esc(ev.guide) +
+        '</span></div><div style="font-size:12px;margin-top:5px">' + esc(ev.error) + "</div>";
+      if (!er.parentNode) $("feed").prepend(er);
+      updateProgress();
+    } else if (ev.type === "done") {
+      $("go").disabled = false;
+      status("<span>Finished — wrote <b>" + esc(ev.out) + "</b></span>" +
+             "<span><b>" + totals.changes + "</b> changes</span>" +
+             "<span><b>" + totals.dropped + "</b> ungrounded</span>" +
+             "<span><b>" + totals.malformed + "</b> malformed</span>");
+      if (ev.repeat > 1) renderSpread(ev.spread);
+      if (source) source.close();
+    } else if (ev.type === "fatal") {
+      $("go").disabled = false;
+      status("Run failed — see the server console.");
+    }
+  }
+
+  function updateProgress() {
+    $("bar").style.width = (expected ? seen / expected * 100 : 0) + "%";
+    status("<span>Running</span><span><b>" + seen + "</b> / " + expected + " extractions</span>" +
+           "<span><b>" + totals.changes + "</b> changes</span>" +
+           (totals.dropped ? "<span><b>" + totals.dropped + "</b> ungrounded</span>" : ""));
+  }
+
+  function renderSpread(spread) {
+    $("spread-card").hidden = false;
+    var worst = spread.reduce(function (m, s) { return Math.max(m, s.max - s.min); }, 0);
+    $("spread").innerHTML =
+      "<table><thead><tr><th>guide</th><th class='n'>runs</th><th class='n'>min</th>" +
+      "<th class='n'>max</th><th class='n'>mean</th><th class='n'>stdev</th>" +
+      "<th>call patterns per pass</th></tr></thead><tbody>" +
+      spread.map(function (s) {
+        var range = s.max - s.min;
+        return "<tr><td class='g'>" + esc(s.guide) + "</td><td class='n'>" + s.runs +
+          "</td><td class='n'>" + s.min + "</td><td class='n" + (range >= 3 ? " hot" : "") +
+          "'>" + s.max + "</td><td class='n'>" + s.mean + "</td><td class='n'>" + s.stdev +
+          "</td><td class='g'>" + s.patterns.join(", ") + "</td></tr>";
+      }).join("") + "</tbody></table>" +
+      "<p class='varnote'>Widest spread on one guide: <b>" + worst + "</b> changes between " +
+      "the smallest and largest pass. A gap between two extractors smaller than this " +
+      "says nothing about either of them.</p>";
+  }
+})();
+</script>
+</body>
+</html>

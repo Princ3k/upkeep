@@ -234,6 +234,28 @@ Two consequences:
 
 Reproduce with `evals/ablate.py`.
 
+## Watching a run happen
+
+```bash
+pip install -e '.[extract]'
+export GEMINI_API_KEY=...            # or ANTHROPIC_API_KEY
+python evals/serve.py --open         # http://127.0.0.1:8765
+```
+
+Standard library only — no web framework — so watching a run costs this project
+no dependency it would not otherwise carry. Pick a backend, a model and which
+guides to run; the page streams each guide as it lands with its kind breakdown,
+and shows **anything dropped as ungrounded right where it happens**, quoting the
+text that was not in the source. That is the moment worth seeing live: a model
+inventing code, caught at the point it does it.
+
+The **Repeats** field is the reason this exists rather than a progress bar.
+Running a configuration several times and reporting the spread is the
+measurement that was missing when a single pass per extractor produced a
+pro-versus-flash gap that turned out to be noise. The page prints the widest
+spread on any one guide, which is the number a comparison has to beat before it
+means anything.
+
 ## The review tool
 
 `evals/build_review.py` bundles the corpus, every run and the contested
