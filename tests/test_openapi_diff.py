@@ -307,3 +307,59 @@ def test_path_level_parameters_are_seen_by_operations():
     changes = diff_specs(spec(False), spec(True), provider="twilio",
                          from_version="a", to_version="b").changes
     assert [c.param for c in changes if isinstance(c, ParamRequiredAdded)] == ["AccountSid"]
+
+
+# ---------------------------------------------------------------------------
+# Pending renames. Real providers rename by adding the successor and keeping
+# the old field, announcing it in prose. Nothing is removed, so a key-set diff
+# reports pure addition — which is why upkeep's first measurement of how often
+# providers rename came back zero across two providers.
+# ---------------------------------------------------------------------------
+
+
+def pending_spec(desc_old: str, desc_new: str | None):
+    props = {"quantity": {"type": "integer", "description": desc_old}}
+    if desc_new is not None:
+        props["quantity_decimal"] = {"type": "string", "description": desc_new}
+    return {"paths": {}, "components": {"schemas": {"invoiceitem": {"properties": props}}}}
+
+
+def test_a_prose_announced_rename_is_found_while_both_fields_exist():
+    """Verbatim from Stripe's `invoiceitem.quantity`."""
+    before = pending_spec("Quantity of units for the invoice item.", None)
+    after = pending_spec(
+        "Quantity of units for the invoice item in integer format. This field "
+        "will be deprecated in favor of `quantity_decimal` in a future version.",
+        "Full-precision decimal quantity.",
+    )
+    spec = diff_specs(before, after, provider="stripe", from_version="a", to_version="b")
+    (rename,) = spec.field_renames()
+    assert (rename.old_name, rename.new_name) == ("quantity", "quantity_decimal")
+    assert rename.pending is True
+
+
+def test_a_pending_rename_is_a_deprecation_not_yet_a_break():
+    """The old field still works. Grading this `breaking` would cry wolf."""
+    before = pending_spec("Quantity of units.", None)
+    after = pending_spec("Use `quantity_decimal` instead.", "Decimal quantity.")
+    assert diff_specs(before, after, provider="stripe", from_version="a",
+                      to_version="b").severity is Severity.deprecation
+
+
+def test_a_successor_that_is_not_a_sibling_field_is_not_claimed():
+    """Prose can name anything — another object, a guide, a concept. Only a
+    successor that actually exists alongside the field is believed."""
+    before = pending_spec("Quantity of units.", None)
+    after = {"paths": {}, "components": {"schemas": {"invoiceitem": {"properties": {
+        "quantity": {"type": "integer",
+                     "description": "Deprecated in favor of `some_other_object`."}}}}}}
+    assert not diff_specs(before, after, provider="stripe", from_version="a",
+                          to_version="b").field_renames()
+
+
+def test_an_already_announced_deprecation_is_not_re_reported():
+    """It was already true at the start of the window; it is not news."""
+    text = "Use `quantity_decimal` instead."
+    same = pending_spec(text, "Decimal quantity.")
+    assert not diff_specs(same, same, provider="stripe", from_version="a",
+                          to_version="b").field_renames()

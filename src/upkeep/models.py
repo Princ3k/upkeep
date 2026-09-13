@@ -45,6 +45,17 @@ class FieldRenamed(_Change):
     kind: Literal["field_renamed"] = "field_renamed"
     path: str
     to: str
+    pending: bool = False
+    """True when the old field still exists alongside the new one.
+
+    This is how real providers rename. Stripe's Accounts v2 migration added
+    `customer_account` beside `customer` in 26 schemas, and `quantity_decimal`
+    beside `quantity`, announcing both in prose. Nothing was removed, so a diff
+    that only compares key sets sees pure addition and reports nothing — which
+    is exactly what upkeep did, and why its first measurement of "how often do
+    providers rename" came back zero.
+    """
+
     inferred: bool = True
     """True when upkeep guessed this pairing from a spec diff rather than being
     told it by the provider.

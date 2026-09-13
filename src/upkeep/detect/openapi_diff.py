@@ -10,6 +10,7 @@ SemanticsChanged, which routes to a human.
 
 from __future__ import annotations
 
+import re
 from collections import Counter
 from typing import Any
 
@@ -28,6 +29,16 @@ collection of peers (currency codes, locale keys, feature flags) rather than a
 struct. A removal and an addition among peers is a membership change, never a
 rename — Stripe dropping `bgn` and adding `gip` from a map of 20-odd currencies
 is the case that proved it."""
+
+SUCCESSOR_PROSE = re.compile(
+    r"(?:deprecated in favou?r of|will be deprecated in favou?r of|"
+    r"replaced by|superseded by)\s+`(?P<a>[A-Za-z0-9_.]+)`"
+    r"|use\s+`(?P<b>[A-Za-z0-9_.]+)`\s+instead",
+    re.IGNORECASE,
+)
+"""Providers announce pending renames in field descriptions. Stripe writes
+"This field will be deprecated in favor of `quantity_decimal`" — a successor
+stated outright, which beats any inference from type signatures."""
 
 HTTP_METHODS = frozenset(
     {"get", "put", "post", "delete", "options", "head", "patch", "trace"}
@@ -175,6 +186,48 @@ def _diff_schema_properties(
     )
 
 
+def _named_successor(description: Any, field: str) -> str | None:
+    match = SUCCESSOR_PROSE.search(str(description or ""))
+    if not match:
+        return None
+    successor = match.group("a") or match.group("b")
+    return successor if successor and successor != field else None
+
+
+def _diff_pending_renames(
+    old_schemas: dict, new_schemas: dict, *, declared: bool = False
+) -> list[Change]:
+    """Find renames announced in prose while both fields still exist.
+
+    A key-set diff cannot see these: nothing was removed. But a consumer reading
+    the old field is on borrowed time and wants to know now, while the migration
+    is still a no-op rather than an outage.
+    """
+    changes: list[Change] = []
+    for name in sorted(set(old_schemas) & set(new_schemas)):
+        old_props = old_schemas[name].get("properties") or {}
+        new_props = new_schemas[name].get("properties") or {}
+        for field in sorted(set(old_props) & set(new_props)):
+            successor = _named_successor(
+                (new_props[field] or {}).get("description"), field
+            )
+            if successor is None:
+                continue
+            if _named_successor((old_props[field] or {}).get("description"), field):
+                continue  # already announced before this window
+            if successor not in new_props:
+                continue  # the named successor isn't a sibling field; don't guess
+            changes.append(
+                FieldRenamed(
+                    path=f"{name}.{field}",
+                    to=f"{name}.{successor}",
+                    inferred=not declared,
+                    pending=True,
+                )
+            )
+    return changes
+
+
 def _diff_operations(old: dict, new: dict, *, declared: bool = False) -> list[Change]:
     old_ops = _operations(old)
     new_ops = _operations(new)
@@ -281,11 +334,16 @@ def diff_specs(
         )
 
     changes.extend(_diff_operations(old, new, declared=declared))
+    changes.extend(
+        _diff_pending_renames(old_schemas, new_schemas, declared=declared)
+    )
 
     # Something the consumer relied on is gone. That upkeep could not work out
     # *what* replaced it makes the change harder to handle, not gentler.
     breaking = (FieldRenamed, EndpointRemoved, SemanticsChanged)
-    if any(isinstance(c, breaking) for c in changes) or any(
+    if any(
+        isinstance(c, breaking) and not getattr(c, "pending", False) for c in changes
+    ) or any(
         isinstance(c, ParamRequiredAdded) and c.safe_default is None for c in changes
     ):
         severity = Severity.breaking
