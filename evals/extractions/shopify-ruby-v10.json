@@ -9,14 +9,89 @@
     {
       "kind": "symbol_removed",
       "symbol": "ShopifyAPI::Base",
-      "replacement": null,
+      "replacement": "ShopifyAPI::Context.setup",
       "note": "The class used to configure API request settings has been removed; configuration moves to ShopifyAPI::Context.setup."
     },
     {
       "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::Base.api_version",
+      "replacement": "ShopifyAPI::Context.setup",
+      "note": "The API request version was set by ShopifyAPI::Base.api_version; it is now the api_version configured in ShopifyAPI::Context.setup."
+    },
+    {
+      "kind": "symbol_removed",
+      "symbol": "ShopifyAPI::Base.header",
+      "replacement": "ShopifyAPI::Context.setup",
+      "note": "User-Agent was set by ShopifyAPI::Base.header; it is now the user_agent_prefix configured in ShopifyAPI::Context.setup. Other custom headers go on ShopifyAPI::Clients::HttpRequest."
+    },
+    {
+      "kind": "symbol_removed",
       "symbol": "ShopifyAPI::Base.activate_session",
-      "replacement": null,
-      "note": "Sessions are no longer activated globally; pass a ShopifyAPI::Auth::Session to each client instead."
+      "replacement": "ShopifyAPI::Context.activate_session",
+      "note": "Sessions can no longer be activated through ShopifyAPI::Base; use ShopifyAPI::Context.activate_session, or pass a session when instantiating a client."
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "graphql-client",
+      "note": "The dependency on the graphql-client gem is deprecated. Existing queries and response parsing must be refactored onto the new GraphQL HTTP Client classes, and the schema no longer needs dumping to a local JSON file."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "ShopifyAPI::GraphQL.client",
+      "language": "ruby",
+      "before": "ShopifyAPI::Base.api_version = \"2023-04\"\nclient = ShopifyAPI::GraphQL.client\nresult = client.query(SHOP_NAME_QUERY)\nshop_name = result.data.shop.name",
+      "after": "client = ShopifyAPI::Clients::Graphql::Admin.new(session: session, api_version: \"2023-04\")\nresponse = client.query(query: query)\nshop_name = response.body[\"data\"][\"shop\"][\"name\"]",
+      "note": "The guide's worked GraphQL refactor: the client is constructed with a session, and the response is a plain body hash rather than a parsed result object."
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "ActiveResource",
+      "note": "The use of ActiveResource is deprecated; REST requests must be refactored to the new format that better represents the REST API schema."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "Order.find",
+      "language": "ruby",
+      "before": "Order.find(:all, params: {financial_status: \"partially_paid\"})",
+      "after": "Order.all(financial_status: \"partially_paid\")",
+      "note": "Finding many records moves from find(:all, params:) to a plain all(...) with keyword arguments."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "Order.find",
+      "language": "ruby",
+      "before": "Order.find(<id>)",
+      "after": "Order.find(id: <id>)",
+      "note": "Finding one record now takes id: as a keyword argument."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "order.save",
+      "language": "ruby",
+      "before": "order = Order.find<id>\norder.fulfillment_status = \"fulfilled\"\norder.note = \"Fulfilled on September 6, 2023\"\norder.save",
+      "after": "order = Order.find(id: <id>)\norder.fulfillment_status = \"fulfilled\"\norder.note = \"Fulfilled on September 6, 2023\"\norder.save!",
+      "note": "Saving is now the bang method. Quoted as the guide writes it, including its own `Order.find<id>` typo in the before column."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "order.post",
+      "language": "ruby",
+      "before": "order = Order.new(<id>)\norder.post(:close)",
+      "after": "order = Order.find(id: <id>)\norder.close",
+      "note": "Generic post(:action) calls are replaced by named methods on a found record."
+    },
+    {
+      "kind": "call_pattern_changed",
+      "symbol": "order.delete",
+      "language": "ruby",
+      "before": "order = Order.new(<id>)\norder.delete",
+      "after": "Order.delete(id: <id>)",
+      "note": "Deleting moves from an instance method to a class method taking id:."
+    },
+    {
+      "kind": "semantics_changed",
+      "op": "order.transactions",
+      "note": "Helper methods for related resource connections are gone; only properties listed in the REST API are supported. order.transactions is no longer supported because transactions is not a property of Order, while order.customer still is."
     }
   ],
   "vectors": []

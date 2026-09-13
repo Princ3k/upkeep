@@ -23,8 +23,8 @@ So every metric below is settled against the guide text itself:
 
 | Metric | Result |
 | --- | --- |
-| Changes extracted | 77 across 10 guides |
-| **Grounded** — every symbol and every line of before/after code appears in the guide | **77 / 77** |
+| Changes extracted | 88 across 10 guides |
+| **Grounded** — every symbol and every line of before/after code appears in the guide | **88 / 88** |
 | Fabrications | 0 |
 | Language correctly matched to the guide's SDK | 10 / 10 |
 | Schema-valid | 10 / 10 |
@@ -50,11 +50,20 @@ here. The crude proxy in the scorer counts lines containing removal/rename
 language and compares that to records produced — enough to catch gross misses,
 nothing more.
 
-It caught one immediately. `shopify-ruby-v10` scores **0.29**, and the cause is
-known: that extraction was made from `grep` output of the guide's headings rather
-than from the full 231-line document. It is left in the corpus unfixed, because
-a shortcut that produces low recall is exactly what an eval is for, and quietly
-patching it would make the headline number prettier and the corpus less honest.
+It caught one immediately. `shopify-ruby-v10` scored **0.29**, because that
+extraction was made from `grep` output of the guide's headings rather than the
+full 231-line document. Re-reading the guide took it from 2 changes to 13 — a
+GraphQL client refactor with before/after blocks and a five-row REST migration
+table, all of it missed the first time. It now scores 1.86.
+
+Two things are worth keeping from that. The proxy is crude and it still worked,
+which is the argument for having one at all. And the miss was 85% of that
+guide's content: **an extractor that skips most of a document still scores a
+perfect 100% on grounding**, which is precisely the limit of what grounding
+tells you.
+
+`shopify-js-v8` at 0.62 and `twilio-python-upgrade` at 0.72 have not been
+re-checked and may be the same problem.
 
 **Semantic precision.** A symbol that appears in the guide but was not actually
 removed passes grounding. So does a correct quotation attached to the wrong
@@ -68,15 +77,38 @@ until it exists these numbers say only that nothing was invented.
 
 | Kind | Count |
 | --- | --- |
-| `symbol_removed` | 47 |
-| `call_pattern_changed` | 19 |
-| `semantics_changed` | 9 |
+| `symbol_removed` | 49 |
+| `call_pattern_changed` | 25 |
+| `semantics_changed` | 12 |
 | `field_renamed` | 2 |
 
-Routing every extracted symbol as if a consumer touched it: **2 Tier A, 19
-Tier B, 47 Tier C.** Two automatic patches out of seventy-seven changes.
+Routing every extracted symbol as if a consumer touched it: **2 Tier A, 27
+Tier B, 49 Tier C.** Two automatic patches out of eighty-eight changes.
 
 That is the shape of the whole finding. Migration guides are dense with things
 worth telling a developer and nearly empty of things safe to fix for them —
 which is why the near-term product is impact analysis, and why the model's job
 here is reading prose rather than writing patches.
+
+
+## Is this publishable?
+
+The harness is. The number is not.
+
+`grounding.py`, the corpus, the mutation tests and `score.py` are real and
+reusable, and the finding they support — that guides are dense with things worth
+reporting and nearly empty of things safe to fix — rests on counting change kinds
+and routing them, which does not depend on who did the extracting.
+
+The **88/88** does. One model produced the extractions and designed the check
+that grades them, in one session, with no automated API run behind it. Grounding
+is blind to recall, as the v10 miss demonstrated at full strength, and blind to
+meaning: a symbol that appears in the guide but was never removed passes, and so
+does a correct quotation attached to the wrong claim. n=10, from three providers,
+chosen partly because their guides were easy to fetch.
+
+To make the number publishable: run `spec_from_guide` against the API so the
+extraction is machine-produced and reproducible, have someone who has not seen
+the extractions write expectations for each guide, and score recall and semantic
+precision against those. Until then this measures one thing, and should only
+claim one thing — **nothing was invented.**
