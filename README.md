@@ -156,9 +156,10 @@ upkeep detect -p twilio --domain api_v2010 --from 2.0.0 --to 2.8.2
 upkeep detect -p twilio --domain preview   --from 2.0.0 --to 2.8.2
 ```
 
-Sweeping all 60 surfaces across that window (17 didn't exist at 2.0.0) found
-**122 breaking changes**, spot-checked exactly against independently computed
-ground truth:
+Sweeping all 60 surfaces across that window — 2024-06-18 to 2026-09-09, just
+over two years, of which 17 surfaces didn't exist at the start — found **122
+breaking changes**, spot-checked exactly against independently computed ground
+truth:
 
 | | |
 | --- | --- |
@@ -205,8 +206,29 @@ grades them `deprecation` rather than `breaking`, because the old field still
 works — the best possible moment to migrate, while it is still a no-op.
 
 The third is not handled and may not be handleable from the spec. Stripe's
-Accounts v2 migration added `customer_account` beside `customer` in 26 schemas
-with no marker on the old field. Only the changelog says it is a migration.
+Accounts v2 migration added `customer_account` beside `customer` in 27 schemas,
+and in **zero** of them does the old field's description mention the successor.
+Only the changelog says it is a migration.
+
+### Twilio's zero, re-checked
+
+Twilio's sweep also returned zero renames, so it got the same scrutiny that
+broke the Stripe result. It survived:
+
+| Check | Result |
+| --- | --- |
+| Fields that became deprecated during the window | 0 (the 28 marked `DEPRECATED.` were already so at the start) |
+| Coexisting near-name pairs, the Stripe shape | 0 |
+| Deprecation prose naming a successor | 0 of 28 — Twilio writes a bare `DEPRECATED.` and points nowhere |
+
+So the two zeros differ. Stripe's was an artifact hiding frequent renames.
+Twilio's holds: across two years and 60 surfaces its field names really are
+stable, and what breaks consumers is endpoints disappearing — 71 of the 122.
+
+One caveat the specs cannot show. Twilio's own changelog puts breaking changes
+in the *helper libraries*: "Java Helper Library 13.0.0 ... contains breaking
+changes requiring migration." The API surface holds still while the SDK moves
+underneath it, and a spec diff cannot see that at all.
 
 So the honest recall on renames is somewhere near a fifth, and the honest
 conclusion is narrower than either of the two this README has carried:
@@ -217,6 +239,10 @@ conclusion is narrower than either of the two this README has carried:
   is where the rest live; provider-declared Migration Specs are the only way to
   get them reliably. That is the argument for the provider side of this product,
   and it is now an argument from evidence.
+- **Providers differ enough that one measurement generalises badly.** Stripe
+  renames constantly and hides it in coexistence. Twilio barely renames and
+  removes endpoints instead, then breaks people in its SDK releases. A third
+  provider is worth measuring before trusting any pattern here.
 - **Impact analysis stands on its own** regardless. Naming the call sites a
   release touches, and being explicit about what could not be worked out, is
   useful today and needs no write access to anyone's repository.
@@ -291,9 +317,10 @@ upkeep detect -p twilio --domain api_v2010 --from 2.0.0 --to 2.8.2
 upkeep detect -p twilio --domain preview   --from 2.0.0 --to 2.8.2
 ```
 
-Sweeping all 60 surfaces across that window (17 didn't exist at 2.0.0) found
-**122 breaking changes**, spot-checked exactly against independently computed
-ground truth:
+Sweeping all 60 surfaces across that window — 2024-06-18 to 2026-09-09, just
+over two years, of which 17 surfaces didn't exist at the start — found **122
+breaking changes**, spot-checked exactly against independently computed ground
+truth:
 
 | | |
 | --- | --- |
