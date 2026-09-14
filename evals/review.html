@@ -151,6 +151,7 @@ td.name{font-family:"JetBrains Mono",monospace;font-size:12px}
 .verdicts button[aria-pressed="true"].yes{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
 .verdicts button[aria-pressed="true"].no{background:var(--no-bg);border-color:var(--no);color:var(--no)}
 .verdicts button[aria-pressed="true"].skip{background:var(--surface-2);border-color:var(--ink-3);color:var(--ink)}
+.verdicts button[aria-pressed="true"].dup{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
 .saved{font-size:11.5px;color:var(--ink-3);margin-left:auto;align-self:center}
 
 .empty{padding:40px 20px;text-align:center;color:var(--ink-3)}
@@ -202,6 +203,11 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);
     <p>Judge against the quoted source, not against the runs. <b>In the guide</b> counts
     it as a real change that the other runs missed; <b>not in the guide</b> marks it an
     over-read.</p>
+    <p><b>Same change, different name</b> is the third option and, in practice, the most
+    common. Runs routinely record one change under different labels — <code>graphql-client</code>
+    against <code>GraphQL client</code>, or a method against the class holding it. Nobody
+    missed anything, so these are excluded from recall rather than counted against whichever
+    run spelled it differently.</p>
   </div>
   <div class="queue-bar">
     <strong id="adj-count"></strong>
@@ -241,6 +247,14 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);
   }
   function key(stem, leaf) { return stem + "__" + leaf; }
 
+  // Document ids accept only [A-Za-z0-9_-.~:@+], and plenty of labels carry
+  // spaces or brackets ("Minimum Ruby Version Requirement"). Without this the
+  // write is rejected and, because the failure is swallowed to keep the page
+  // quiet, the verdict would look saved and never persist.
+  function docId(stem, leaf) {
+    return (stem + "__" + leaf).replace(/[^A-Za-z0-9_\-.~:@+]/g, "_").slice(0, 200);
+  }
+
   /* ---------------- persistence: db if granted, else this browser ------- */
   function localLoad() {
     try {
@@ -257,7 +271,7 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);
     if (verdict === null) { delete verdicts[k]; } else { verdicts[k] = verdict; }
     localSave();
     if (db) {
-      var doc = db.doc("verdicts/" + k);
+      var doc = db.doc("verdicts/" + docId(stem, leaf));
       var write = verdict === null
         ? doc.delete()
         : doc.set({ guide: stem, leaf: leaf, verdict: verdict, at: Date.now() });
@@ -443,6 +457,7 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);
         contextFor(it.guide, it.leaf) +
         '<div class="verdicts">' +
         vbtn(k, "real", "yes", "In the guide — others missed it", v) +
+        vbtn(k, "duplicate", "dup", "Same change, different name", v) +
         vbtn(k, "overread", "no", "Not in the guide — over-read", v) +
         vbtn(k, "unsure", "skip", "Unsure", v) +
         "</div></div>";
@@ -455,12 +470,14 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);
 
   function renderRecall() {
     var items = contested();
-    var real = {}, judged = 0;
+    var real = {}, judged = 0, dupes = 0, overreads = 0;
     items.forEach(function (it) {
       var v = verdicts[key(it.guide.stem, it.leaf)];
       if (!v || v === "unsure") return;
       judged++;
-      if (v === "real") real[key(it.guide.stem, it.leaf)] = it.foundBy;
+      if (v === "duplicate") { dupes++; return; }   // nobody missed it; not truth
+      if (v === "overread") { overreads++; return; }
+      real[key(it.guide.stem, it.leaf)] = it.foundBy;
     });
     var realCount = Object.keys(real).length;
 
@@ -482,7 +499,9 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);
       var truth = agreedAll + realCount;
       var pct = truth ? Math.round(found / truth * 100) : 0;
       return card(r + " recall", pct + "%", found + " of " + truth + " confirmed");
-    }).join("") + card("judged", judged + " / " + items.length, realCount + " confirmed real");
+    }).join("") +
+      card("judged", judged + " / " + items.length,
+           realCount + " real · " + dupes + " naming · " + overreads + " over-read");
   }
 
   /* ---------------- wiring ---------------------------------------------- */

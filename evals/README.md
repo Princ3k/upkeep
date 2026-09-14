@@ -296,5 +296,31 @@ found.
 
 That queue is the point. Grounding proves nothing was invented and says nothing
 about what was missed, so recall has to come from a person reading the source.
-Each verdict — in the guide, or an over-read — is stored per identifier, and the
-page computes per-run recall from the confirmed set as the judging proceeds.
+Each verdict is stored per identifier and the page computes per-run recall from
+the confirmed set as judging proceeds.
+
+### What the first ten cards showed
+
+Nine of ten were **the same change under a different label**, and one was a
+genuine miss. Nobody over-read anything.
+
+| | |
+| --- | --- |
+| `Minimum Ruby Version Requirement` / `Ruby version` / `ruby` | one Ruby 3.0→3.2 bump, three labels |
+| `Session` | flash named the class, hand named its two removed methods |
+| `WebhookHandler` | flash named the replacement, hand the removed class |
+| `GraphQL client` / `graphql-client` | the same gem deprecation, hyphenated differently |
+| **`ActiveResource`** | **real** — pro and flash recorded no equivalent under any label |
+
+So the contested set is mostly an artifact of matching on bare identifiers, and
+the agreement figures reported above understate how consistently these models
+read the same document. Matching on the note text rather than the leaf would
+shrink the queue sharply and measure something truer.
+
+Two fixes came out of judging them. The verdict vocabulary had no way to say
+"same change, different name" — the most common answer — so the binary forced a
+wrong answer either way; it exists now and duplicates leave the truth set rather
+than penalising whichever run spelled it differently. And the page's own verdict
+writes were failing silently for any label containing a space, because document
+ids reject them and the failure is swallowed to keep the page quiet: a verdict
+on `Minimum Ruby Version Requirement` looked saved and vanished on reload.
