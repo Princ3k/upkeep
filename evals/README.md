@@ -92,14 +92,20 @@ until it exists these numbers say only that nothing was invented.
 | `semantics_changed` | 12 |
 | `field_renamed` | 2 |
 
-Routing every extracted symbol as if a consumer touched it, the 88 changes
-produce 90 work items — 88 one-to-one, plus one guide where a single change
-matches two sites: **2 Tier A, 27 Tier B, 61 Tier C.** Two automatic patches out
-of eighty-eight changes.
+Routing every extracted symbol as if a consumer touched it: **2 Tier A, 27
+Tier B, 49 Tier C** — 78 work items, which is what `score.py` prints. Two
+automatic patches out of eighty-eight changes.
 
-(This table previously reported 61 as 49, which is the `symbol_removed` count
-above it. Tier C is not that count: `semantics_changed` and the escalated
-`call_pattern_changed` records land there too.)
+Only 76 of the 88 changes name a symbol a consumer could touch; the 12
+`semantics_changed` records — a Ruby version bump, a dropped platform — name
+nothing to index, so they produce no call site and no work item. That is why the
+review tool reports **61** Tier C for the same corpus and is also right:
+`build_review.py` falls back to any label a record carries, so those 12 route as
+well, and 49 + 12 = 61. Both numbers are correct for what they count; neither is
+quotable without saying which.
+
+(The count is 78 rather than 76 because one guide, `shopify-ruby-v10`, has a
+change that matches two sites.)
 
 That is the shape of the whole finding. Migration guides are dense with things
 worth telling a developer and nearly empty of things safe to fix for them —

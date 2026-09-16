@@ -403,10 +403,10 @@ fields vanishing with no stated successor. Both need judgment. Neither is a
 mechanical rename.
 
 Reading the providers' own guides sharpened it rather than reversing it. Across
-ten real migration guides, 88 extracted changes route to 90 work items — **2
-Tier A, 27 Tier B, 61 Tier C** — and Tier A stayed at 2 across all three
-extractors. Guides are dense with things worth telling a developer and nearly
-empty of things safe to fix for them.
+ten real migration guides, the 88 extracted changes route to **2 Tier A, 27
+Tier B, 49 Tier C**, and Tier A stayed at 2 across all three extractors. Guides
+are dense with things worth telling a developer and nearly empty of things safe
+to fix for them.
 
 So the near-term value is not the patch. It is the sentence *"this release
 breaks these 14 call sites in your code, here they are, and here is what upkeep
