@@ -169,26 +169,87 @@ pro/flash gap was wrong — the gap was the confound above. Repeated passes rema
 worth running, because two disagreeing passes would have exposed that confound
 immediately.
 
-### The number that actually matters: 60%
+### The number that actually matters, and what it was measuring
 
 ```
 python evals/compare.py runs/google-pro runs/google-flash
 ```
 
-The runs agree on only part of what any of them named — `evals/compare.py`
-prints the exact figure for any two, and the review tool counts the contested
-set at **91 identifiers** across the three runs.
+An earlier version of this section put that number at **60%** and concluded that
+any two runs disagree about a document "roughly 40% of the time". Neither figure
+came out of `compare.py`. What it actually prints, for every pairing:
+
+| | exact label | bare identifier | claim |
+| --- | --- | --- | --- |
+| hand vs pro | 32% | 43% | **68%** |
+| hand vs flash | 52% | 56% | **61%** |
+| pro vs flash | 41% | 48% | **78%** |
+
+The first two columns were the ones being quoted, and both are mostly measuring
+spelling. The third matches on the *claim* — `match.py`, described below — and
+is the figure worth carrying.
+
+Across all three runs at once the same correction applies: **91 contested
+identifiers become 31 contested claims**, and three-way agreement goes from 33%
+to 60%.
 
 So: three extractors, all perfectly grounded, all fabricating nothing — and any
-two of them disagree about what a document says roughly 40% of the time. **They
-are not clean because they are accurate; they are clean because grounding only
-catches invention, and none of them invented anything.** Recall is the problem,
-it is large, and it is invisible to every automatic check here.
+two of them still disagree about a fifth to two-fifths of what a document says.
+**They are not clean because they are accurate; they are clean because grounding
+only catches invention, and none of them invented anything.** Recall is the
+problem, it is large, and it is invisible to every automatic check here.
 
-That is also the strongest evidence yet for an independent grader. The 58
-single-run findings printed by `compare.py` are exactly the set a human should
-adjudicate first, because each one is a miss by one side or an over-read by the
-other.
+That is still the strongest evidence for an independent grader. The 31 contested
+claims are the set a human should adjudicate first, because each is a miss by one
+side or an over-read by the other — and now each of them is plausibly one or the
+other, rather than nine times in ten a disagreement about hyphenation.
+
+### Matching on the claim, not the label
+
+The first ten cards judged in the review tool were contested *identifiers*, and
+nine of the ten were the same change under a different label. That queue was
+measuring spelling. `evals/match.py` groups records by what they claim, under six
+rules, each named in the output so a reviewer can check the merge as well as the
+claim:
+
+| rule | joins |
+| --- | --- |
+| `identical` | the same name, segment for segment |
+| `spelling` | the same name once case and punctuation go — `graphql-client` / `GraphQL client` |
+| `code` | the same `before` block quoted, whitespace ignored |
+| `qualified` | one name a suffix of the other — `Session#serialize` / `ShopifyAPI::Auth::Session#serialize` |
+| `member` | one name a proper prefix of the other, with corroboration — `Session` / `Session#serialize` |
+| `mention` | an unlabelled record, matched by the symbol its own note names |
+
+`shopify-ruby-v16` now collapses to exactly two claims, both found by all three
+runs, which is what that guide documents: one Ruby version bump and one removal
+of session serialization. The queue's first card is `ActiveResource` — the one
+real miss among the adjudicated ten — instead of nine spelling duplicates.
+
+**The number is not tuned.** Agreement sits at 60% for every note-similarity
+threshold from 0.20 to 0.75; the rules, not the ratio, do the discriminating.
+
+Two things the corpus forced, and both are in `tests/test_match.py`:
+
+- **Note similarity is containment, not Jaccard.** One run wrote the Ruby bump in
+  a sentence; another added why it happened and what it meant. Four of the
+  shorter note's five content words appear in the longer one — but dividing by
+  the union scores that **0.27**, which penalises the run that wrote the more
+  thorough note, and the two records stay apart. Containment scores the same pair
+  0.80. The asymmetry is the normal case here, not an edge case. A floor of three
+  shared words stops a two-word note containing its way into anything.
+- **The permissive rules apply to free text only.** `Session#serialize` and
+  `Session.deserialize` share three of four label words and, in one real run,
+  near-identical notes. Merging them would erase a real removal, and a naive
+  substring test merges them outright, since `serialize` is a substring of
+  `deserialize`. A label containing whitespace is prose a model wrote, where word
+  choice is arbitrary; a label without one is a name, where a differing segment
+  is a real difference.
+
+Most of the 31 cases in `tests/test_match.py` are non-matches, for the same
+reason `test_grounding.py` is mostly mutations: a matcher that merges everything
+reports perfect agreement and measures nothing. **The separations are what make
+the number mean anything.**
 
 ### Three bugs these runs found in this repo
 
@@ -219,8 +280,9 @@ and routing them, which does not depend on who did the extracting.
 
 The **88/88** did, and the machine-made runs only partly fix it. Extraction is
 now reproducible, which removes one objection. But the same author still wrote
-the check that grades it, and the 60% cross-run agreement shows how little a
-perfect grounding score constrains accuracy. Grounding
+the check that grades it, and even at the corrected 60% claim agreement, two
+runs that invented nothing still disagree about two-fifths of what they read —
+which is how little a perfect grounding score constrains accuracy. Grounding
 is blind to recall, as the v10 miss demonstrated at full strength, and blind to
 meaning: a symbol that appears in the guide but was never removed passes, and so
 does a correct quotation attached to the wrong claim. n=10, from three providers,
@@ -294,16 +356,18 @@ means anything.
 
 ## The review tool
 
-`evals/build_review.py` bundles the corpus, every run and the contested
-identifiers into `review-data.json`, and `evals/review.html` is a published
+`evals/build_review.py` bundles the corpus, every run and the contested claims
+into `review-data.json` (and `review-data.js`, which is what the page actually
+loads — the artifact CSP blocks fetch, and for a while the builder wrote only the
+`.json`, so the page had nothing to read). `evals/review.html` is a published
 artifact over it: the runs side by side, each guide's source next to what every
-run extracted, and an adjudication queue for the identifiers only some runs
-found.
+run extracted, and an adjudication queue for the claims only some runs made.
 
 That queue is the point. Grounding proves nothing was invented and says nothing
 about what was missed, so recall has to come from a person reading the source.
-Each verdict is stored per identifier and the page computes per-run recall from
-the confirmed set as judging proceeds.
+Each verdict is stored per claim and the page computes per-run recall from the
+confirmed set as judging proceeds. Every card lists what each run called the
+change and which rule merged them, so the merge is checkable too.
 
 ### What the first ten cards showed
 
@@ -318,15 +382,23 @@ genuine miss. Nobody over-read anything.
 | `GraphQL client` / `graphql-client` | the same gem deprecation, hyphenated differently |
 | **`ActiveResource`** | **real** — pro and flash recorded no equivalent under any label |
 
-So the contested set is mostly an artifact of matching on bare identifiers, and
-the agreement figures reported above understate how consistently these models
-read the same document. Matching on the note text rather than the leaf would
-shrink the queue sharply and measure something truer.
+So the contested set was mostly an artifact of matching on bare identifiers, and
+the agreement figures understated how consistently these models read the same
+document. **That is now fixed** — `match.py` above merges those cases before a
+reviewer sees them, and the queue went from 91 cards to 31. Judging ten cards to
+discover the queue was measuring the wrong thing was worth more than judging
+ninety of them would have been.
 
-Two fixes came out of judging them. The verdict vocabulary had no way to say
+Three fixes came out of judging them. The verdict vocabulary had no way to say
 "same change, different name" — the most common answer — so the binary forced a
 wrong answer either way; it exists now and duplicates leave the truth set rather
-than penalising whichever run spelled it differently. And the page's own verdict
+than penalising whichever run spelled it differently. The page's own verdict
 writes were failing silently for any label containing a space, because document
 ids reject them and the failure is swallowed to keep the page quiet: a verdict
-on `Minimum Ruby Version Requirement` looked saved and vanished on reload.
+on `Minimum Ruby Version Requirement` looked saved and vanished on reload. And
+the queue itself was rebuilt on claims, which is what the rest of this section
+is about.
+
+The `duplicate` verdict stays, for the merges the matcher does not make. Each one
+it is used on now is a case worth teaching `match.py`, rather than the routine
+answer.

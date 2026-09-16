@@ -300,9 +300,17 @@ also records what does not:
   over automatic patching did not move across three independent extractors.
 
 And the limit, stated plainly there: grounding catches invention and is blind to
-recall. Any two of these runs disagree about what a document says roughly 40% of
-the time, and no automatic check in this repo can see it. That is what the
-review tool and the next step below are for.
+recall. Matching each run's records by the *claim* they make rather than the name
+they happened to attach, any two of these runs still disagree about a fifth to
+two-fifths of what a document says — and no automatic check in this repo can tell
+a miss from an over-read. That is what the review tool and the next step below
+are for.
+
+Getting that figure right took two passes. Matched on bare identifiers the same
+runs agree only 33% of the time, but nine of the first ten disagreements turned
+out to be one change under two names. `evals/match.py` merges those, which took
+the adjudication queue from 91 cards to 31 and left the first card as the one
+genuine miss.
 
 ## How often do providers actually rename? Measured wrong, twice.
 
@@ -424,11 +432,11 @@ above. What that bought was mostly a corrected question. The remaining four:
 
 1. **An independent grader for the guide extractor.** Grounding proves nothing
    was invented and says nothing about what was missed, and three perfectly
-   grounded runs disagree about roughly 40% of what any of them named. Someone
-   who has not seen the extractions has to write expectations per guide, so
-   recall and semantic precision can be scored against something other than the
-   extractor's own author. `evals/review.html` is the tool; the adjudication
-   queue is the work.
+   grounded runs still make the same claim only 60% of the time. Someone who has
+   not seen the extractions has to write expectations per guide, so recall and
+   semantic precision can be scored against something other than the extractor's
+   own author. `evals/review.html` is the tool and its queue is down to 31 real
+   disagreements; judging them is the work.
 2. **Contract replay.** Record real request/response pairs, assert outcomes
    match across versions. Tier B model-assisted patching stays unbuilt until
    something can verify it, and that order is deliberate.
