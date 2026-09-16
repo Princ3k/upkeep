@@ -135,6 +135,11 @@ td.name{font-family:"JetBrains Mono",monospace;font-size:12px}
 .card.done{opacity:.6}
 .card-top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
 .leaf{font-family:"JetBrains Mono",monospace;font-size:15px;font-weight:500}
+.spellings{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 0 2px;font-size:12px}
+.spellings .sp{color:var(--dim,#8b949e);font-family:"JetBrains Mono",monospace}
+.spellings .sp b{color:inherit;font-weight:600;text-transform:uppercase;font-size:10px;
+  letter-spacing:.04em;margin-right:4px;opacity:.75}
+.spellings .why{font-style:italic;opacity:.7}
 .where{font-size:11.5px;color:var(--ink-3);font-family:"JetBrains Mono",monospace}
 .ctx{margin:10px 0;padding:9px 12px;background:var(--surface-2);border-radius:4px;
   font-family:"JetBrains Mono",monospace;font-size:11px;line-height:1.6;
@@ -197,17 +202,22 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);
 
 <section class="panel" id="p-adj" role="tabpanel" aria-labelledby="t-adj" hidden>
   <div class="adj-intro">
-    <p><b>Every identifier below was found by some runs and missed by others.</b>
+    <p><b>Every claim below was found by some runs and missed by others.</b>
     Each one is either a real change one run missed, or something a run read into the
     document that is not there. No automatic check can tell those apart.</p>
     <p>Judge against the quoted source, not against the runs. <b>In the guide</b> counts
     it as a real change that the other runs missed; <b>not in the guide</b> marks it an
     over-read.</p>
-    <p><b>Same change, different name</b> is the third option and, in practice, the most
-    common. Runs routinely record one change under different labels — <code>graphql-client</code>
-    against <code>GraphQL client</code>, or a method against the class holding it. Nobody
-    missed anything, so these are excluded from recall rather than counted against whichever
-    run spelled it differently.</p>
+    <p>These are <i>claims</i>, not identifiers. The first ten cards judged here were
+    identifiers, and nine of the ten turned out to be one change under two names —
+    <code>graphql-client</code> against <code>GraphQL client</code>, or a method against
+    the class holding it. That queue was measuring spelling, so <code>match.py</code> now
+    merges those before you see them: 91 contested identifiers become 31 contested claims.
+    Each card lists what every run called it and which rule merged them, so you can
+    check the merge as well as the claim.</p>
+    <p><b>Same change, different name</b> remains for the merges the matcher does not
+    make. Those are excluded from recall rather than counted against whichever run
+    spelled it differently — and each one is a case worth teaching the matcher.</p>
   </div>
   <div class="queue-bar">
     <strong id="adj-count"></strong>
@@ -221,7 +231,7 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);
 <footer>
   Ten published migration guides from Shopify and Twilio SDK repositories, extracted by
   <span class="mono">evals/extract.py</span> and scored by <span class="mono">evals/score.py</span>.
-  Verdicts are stored per identifier and can be read back to compute recall.
+  Records are grouped into claims by <span class="mono">evals/match.py</span>; verdicts are stored per claim and can be read back to compute recall.
 </footer>
 </div>
 
@@ -323,6 +333,9 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);
   function renderOverview() {
     var board = document.getElementById("board");
     var totalContested = GUIDES.reduce(function (n, g) {
+      return n + (g.claims || []).filter(function (c) { return c.contested; }).length;
+    }, 0);
+    var oldContested = GUIDES.reduce(function (n, g) {
       return n + g.agreement.filter(function (a) { return a.contested; }).length;
     }, 0);
     var all = RUNS.map(runTotals);
@@ -334,7 +347,8 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);
       card("changes extracted", changes, RUNS.length + " runs") +
       card("grounded", grounded + " / " + changes,
            grounded === changes ? "nothing invented" : (changes - grounded) + " not in source") +
-      card("contested", totalContested, "identifiers only some runs found") +
+      card("contested", totalContested,
+           "claims only some runs found — " + oldContested + " before claim matching") +
       card("auto-patchable", all.map(function (t) { return t.tiers.A; }).join(" / "),
            "Tier A, per run");
 
@@ -342,8 +356,9 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);
       RUNS.map(function (r) { return '<th class="num">' + esc(r) + "</th>"; }).join("") +
       '<th class="num">shared</th><th class="num">contested</th></tr></thead>';
     var body = GUIDES.map(function (g) {
-      var shared = g.agreement.filter(function (a) { return !a.contested; }).length;
-      var cont = g.agreement.length - shared;
+      var claims = g.claims || [];
+      var shared = claims.filter(function (c) { return !c.contested; }).length;
+      var cont = claims.length - shared;
       return "<tr><td class='name'>" + esc(g.stem) + "</td>" +
         RUNS.map(function (r) {
           var run = g.runs[r];
@@ -354,14 +369,17 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);
     document.getElementById("overview-table").innerHTML = head + "<tbody>" + body + "</tbody>";
 
     var agree = GUIDES.reduce(function (acc, g) {
-      g.agreement.forEach(function (a) { acc.total++; if (!a.contested) acc.shared++; });
+      (g.claims || []).forEach(function (c) { acc.total++; if (!c.contested) acc.shared++; });
+      g.agreement.forEach(function (a) { acc.idTotal++; if (!a.contested) acc.idShared++; });
       return acc;
-    }, { total: 0, shared: 0 });
+    }, { total: 0, shared: 0, idTotal: 0, idShared: 0 });
+    var pct = function (n, d) { return d ? Math.round(n / d * 100) : 0; };
     document.getElementById("overview-note").textContent =
-      "All " + RUNS.length + " runs name the same identifier " +
-      (agree.total ? Math.round(agree.shared / agree.total * 100) : 0) +
-      "% of the time. Every run is perfectly grounded, so that gap is not invention — " +
-      "it is disagreement about what these documents say.";
+      "All " + RUNS.length + " runs make the same claim " + pct(agree.shared, agree.total) +
+      "% of the time — against " + pct(agree.idShared, agree.idTotal) +
+      "% when the same records are matched on the bare identifier. That gap is " +
+      "spelling, not reading. Every run is perfectly grounded, so what remains is " +
+      "not invention: it is disagreement about what these documents say.";
   }
   function card(lab, val, foot) {
     return '<div class="stat"><div class="lab">' + esc(lab) + '</div><div class="val">' +
@@ -414,27 +432,60 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);
   }
 
   /* ---------------- adjudicate ------------------------------------------ */
+  /* The queue is claims, not identifiers. Judging the first ten identifier
+     cards showed nine of ten were one change under two names, so that queue was
+     mostly measuring spelling. match.py groups them; `leaf` here is the claim's
+     representative label, which keeps the existing verdict keying. */
   function contested() {
     var out = [];
     GUIDES.forEach(function (g) {
-      g.agreement.forEach(function (a) {
-        if (a.contested) out.push({ guide: g, leaf: a.leaf, foundBy: a.found_by });
+      (g.claims || []).forEach(function (c) {
+        if (c.contested) out.push({ guide: g, leaf: c.label, foundBy: c.found_by,
+                                    members: c.members || [], reasons: c.reasons || [] });
       });
     });
     return out;
   }
-  function contextFor(g, leaf) {
-    var lines = g.text.split("\n"), hits = [];
-    for (var i = 0; i < lines.length && hits.length < 3; i++) {
-      if (lines[i].indexOf(leaf) !== -1) hits.push({ n: i + 1, text: lines[i] });
+  /* Search the guide for any spelling a run used, not only the claim's own
+     label: a claim named `Minimum Ruby Version Requirement` may appear in the
+     document as nothing but the word `ruby`. */
+  function termsFor(it) {
+    var seen = {}, terms = [];
+    [it.leaf].concat((it.members || []).map(function (m) { return m.label; }))
+      .forEach(function (s) {
+        if (!s) return;
+        var parts = s.split(/[.#]|::/);
+        [s, parts[parts.length - 1]].forEach(function (term) {
+          if (term && term.length > 1 && !seen[term]) { seen[term] = 1; terms.push(term); }
+        });
+      });
+    return terms;
+  }
+  function contextFor(g, it) {
+    var lines = g.text.split("\n"), terms = termsFor(it), hits = [], used = null;
+    for (var ti = 0; ti < terms.length && !hits.length; ti++) {
+      for (var i = 0; i < lines.length && hits.length < 3; i++) {
+        if (lines[i].indexOf(terms[ti]) !== -1) { hits.push({ n: i + 1, text: lines[i] }); used = terms[ti]; }
+      }
     }
-    if (!hits.length) return '<div class="ctx none">This identifier does not appear ' +
+    if (!hits.length) return '<div class="ctx none">No spelling of this claim appears ' +
       'literally anywhere in the guide.</div>';
     return '<div class="ctx">' + hits.map(function (h) {
       var safe = esc(h.text.trim());
-      var re = new RegExp(leaf.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g");
-      return '<span class="ln">' + h.n + "</span>  " + safe.replace(re, "<mark>" + esc(leaf) + "</mark>");
+      var re = new RegExp(used.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g");
+      return '<span class="ln">' + h.n + "</span>  " + safe.replace(re, "<mark>" + esc(used) + "</mark>");
     }).join("\n") + "</div>";
+  }
+  /* What each run actually called it — the thing that makes a merge checkable. */
+  function spellings(it) {
+    var rows = (it.members || []).filter(function (m) { return m.label || m.display; });
+    if (!rows.length) return "";
+    return '<div class="spellings">' + rows.map(function (m) {
+      return '<span class="sp"><b>' + esc(m.run) + "</b> " +
+        esc(m.label || m.display) + "</span>";
+    }).join("") + (it.reasons && it.reasons.length
+      ? '<span class="why">merged by ' + esc(it.reasons.join(", ")) + "</span>" : "") +
+      "</div>";
   }
   function renderQueue() {
     var items = contested();
@@ -454,14 +505,15 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);
       return '<div class="card' + (v ? " done" : "") + '" data-k="' + esc(k) + '">' +
         '<div class="card-top"><span class="leaf">' + esc(it.leaf) + "</span>" + chips +
         '<span class="where">' + esc(it.guide.stem) + "</span></div>" +
-        contextFor(it.guide, it.leaf) +
+        spellings(it) +
+        contextFor(it.guide, it) +
         '<div class="verdicts">' +
         vbtn(k, "real", "yes", "In the guide — others missed it", v) +
         vbtn(k, "duplicate", "dup", "Same change, different name", v) +
         vbtn(k, "overread", "no", "Not in the guide — over-read", v) +
         vbtn(k, "unsure", "skip", "Unsure", v) +
         "</div></div>";
-    }).join("") || '<div class="empty">Every run agreed on every identifier.</div>';
+    }).join("") || '<div class="empty">Every run agreed on every claim.</div>';
   }
   function vbtn(k, value, cls, label, current) {
     return '<button class="' + cls + '" data-k="' + esc(k) + '" data-v="' + value +
@@ -489,7 +541,7 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);
     }
     // Agreed identifiers are real by construction; contested ones need a verdict.
     var agreedAll = GUIDES.reduce(function (n, g) {
-      return n + g.agreement.filter(function (a) { return !a.contested; }).length;
+      return n + (g.claims || []).filter(function (c) { return !c.contested; }).length;
     }, 0);
     board.innerHTML = RUNS.map(function (r) {
       var found = agreedAll;

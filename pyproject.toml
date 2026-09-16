@@ -31,5 +31,5 @@ packages = ["src/upkeep"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
+pythonpath = ["src", "evals"]
 filterwarnings = ["error::DeprecationWarning"]

@@ -10,6 +10,15 @@ they corroborate each other. Where only one does, it is either a miss by the
 other or an over-read by that one, and those are the records worth a human's
 attention. Neither run is treated as the answer key.
 
+Three agreement figures are printed, and the gap between them is the point.
+Matching on the exact label counts `Session#serialize` against
+`ShopifyAPI::Auth::Session#serialize` as a disagreement; matching on the bare
+identifier fixes that one case and still counts `ruby` against `Minimum Ruby
+Version Requirement`. Matching on the *claim* — `match.py`, which reads the note
+text, the quoted code and the qualified name as segments — stops measuring
+spelling. Judging the first ten contested cards showed nine of ten were one
+change under two names, so the first two figures understate agreement badly.
+
     python evals/compare.py runs/google-pro runs/google-flash
 """
 
@@ -19,7 +28,7 @@ import json
 import sys
 from pathlib import Path
 
-from upkeep.detect.grounding import check_grounding
+from match import Record, cluster
 from upkeep.models import MigrationSpec
 
 ROOT = Path(__file__).parent
@@ -106,7 +115,7 @@ def main() -> int:
 
     union = totals["both"] + totals[f"{left_name} only"] + totals[f"{right_name} only"]
     if union:
-        print(f"\nagreement (exact label): {totals['both'] / union:.0%}")
+        print(f"\nagreement (exact label):     {totals['both'] / union:.0%}")
 
     # Again, ignoring how far each run qualified each name.
     shared_leaf = only_left = only_right = 0
@@ -125,12 +134,38 @@ def main() -> int:
         print(f"agreement (bare identifier): {shared_leaf / union_leaf:.0%}"
               f"   shared={shared_leaf} left-only={only_left} right-only={only_right}")
 
-    print(f"\nfound by only one run ({len(disagreements)}) — each is a miss by one "
-          "side or an over-read by the other:")
-    for stem, who, label in disagreements[:40]:
+    # And once more by claim, which is the figure worth quoting.
+    agreed = 0
+    contested: list[tuple[str, str, str]] = []
+    for entry in manifest["guides"]:
+        stem = entry["file"][:-3]
+        left, right = load(left_dir, stem), load(right_dir, stem)
+        if left is None or right is None:
+            continue
+        records = [
+            Record(run=run, guide=stem, index=i, kind=change.kind,
+                   label=label_of(change) or "",
+                   note=getattr(change, "note", "") or "",
+                   before=getattr(change, "before", None))
+            for run, spec in ((left_name, left), (right_name, right))
+            for i, change in enumerate(spec.changes)
+        ]
+        for claim in cluster(records):
+            if len(claim.runs) == 2:
+                agreed += 1
+            else:
+                contested.append((stem, next(iter(claim.runs)), claim.label))
+    union_claim = agreed + len(contested)
+    if union_claim:
+        print(f"agreement (claim):           {agreed / union_claim:.0%}"
+              f"   shared={agreed} contested={len(contested)}")
+
+    print(f"\nfound by only one run, matched on the claim ({len(contested)}) — each "
+          "is a miss by one side or an over-read by the other:")
+    for stem, who, label in contested[:40]:
         print(f"   {stem:<24} {who:<14} {label}")
-    if len(disagreements) > 40:
-        print(f"   ... and {len(disagreements) - 40} more")
+    if len(contested) > 40:
+        print(f"   ... and {len(contested) - 40} more")
     return 0
 
 
