@@ -92,8 +92,14 @@ until it exists these numbers say only that nothing was invented.
 | `semantics_changed` | 12 |
 | `field_renamed` | 2 |
 
-Routing every extracted symbol as if a consumer touched it: **2 Tier A, 27
-Tier B, 49 Tier C.** Two automatic patches out of eighty-eight changes.
+Routing every extracted symbol as if a consumer touched it, the 88 changes
+produce 90 work items — 88 one-to-one, plus one guide where a single change
+matches two sites: **2 Tier A, 27 Tier B, 61 Tier C.** Two automatic patches out
+of eighty-eight changes.
+
+(This table previously reported 61 as 49, which is the `symbol_removed` count
+above it. Tier C is not that count: `semantics_changed` and the escalated
+`call_pattern_changed` records land there too.)
 
 That is the shape of the whole finding. Migration guides are dense with things
 worth telling a developer and nearly empty of things safe to fix for them —

@@ -267,6 +267,43 @@ input and the spec diff the corroboration. Nothing in the stages after `detect`
 changes — `MigrationSpec` is already the interface, and `upkeep run --spec` will
 consume a hand-authored or guide-derived one today.
 
+### Ten real guides, three extractors — [`evals/`](evals/README.md)
+
+That argument is now measured rather than asserted. Ten published migration
+guides — four Shopify Ruby, four Shopify JS, two Twilio, across Ruby, TypeScript
+and Python — are copied verbatim into `evals/corpus/` with provenance, and
+`spec_from_guide` was run over all of them three times: once by hand and twice
+against an API.
+
+```bash
+pip install -e '.[extract]'
+python evals/score.py                    # no API key needed; reads the corpus
+python evals/compare.py runs/google-pro runs/google-flash
+python evals/serve.py --open             # watch a run land, guide by guide
+```
+
+| | hand | gemini-3.1-pro | gemini-3-flash |
+| --- | --- | --- | --- |
+| Changes | 88 | 91 | 93 |
+| Grounded — every symbol and every quoted line present in the source | 88/88 | 91/91 | 93/93 |
+| Fabrications | 0 | 0 | 0 |
+| Tier A (auto-patchable) | **2** | **2** | **2** |
+
+Two findings survive the scrutiny in [`evals/README.md`](evals/README.md), which
+also records what does not:
+
+- **Nothing was invented**, across 184 machine-extracted changes from ten real
+  documents. `detect/grounding.py` drops anything it cannot find in the source,
+  and `tests/test_grounding.py` fires four real failure shapes at the check so
+  the 100% carries information.
+- **Tier A is 2 in all three runs.** The ratio that argues for impact analysis
+  over automatic patching did not move across three independent extractors.
+
+And the limit, stated plainly there: grounding catches invention and is blind to
+recall. Any two of these runs disagree about what a document says roughly 40% of
+the time, and no automatic check in this repo can see it. That is what the
+review tool and the next step below are for.
+
 ## How often do providers actually rename? Measured wrong, twice.
 
 The first sweep reported **zero renames** across three months of Stripe and all
@@ -343,102 +380,25 @@ Anything measured here is reproducible from the commands above. The lesson
 worth keeping is that a metric which returns a clean zero deserves more
 suspicion than one that returns a mess.
 
-## Try it
-
-```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-pytest -q
-
-# Stage a consumer repo that is broken against the provider's new surface
-cp -r tests/fixtures/consumer /tmp/demo
-
-# 1. Diff two API versions into a Migration Spec
-upkeep detect -p acme --from v1 --to v2 \
-  --spec-dir tests/fixtures/specs --vector test_billing.py --out /tmp/spec.json
-
-# 2. See what the consumer touches, and what can be proven
-upkeep index /tmp/demo -p acme
-
-# 3. Migrate and verify
-upkeep run /tmp/demo --spec /tmp/spec.json --write
-```
-
-The fixture consumer's test suite is **red** before the migration and **green**
-after, with no test file modified. That round trip is `test_end_to_end.py`.
-
----
-
-## What's deliberately missing
-
-| Not built | Why |
-| --- | --- |
-| Tier B model-assisted patching | Pointless before contract replay exists to verify it. |
-| Contract replay | The next thing to build. Record real request/response pairs, assert outcomes match across versions. |
-| Provider console + burndown | The revenue side. Needs consumer-side usage data first. |
-| GitHub App delivery | `delivery/body.py` renders the body; nothing opens the PR yet. |
-| Multi-language | libcst is Python-only. A second language means a second indexer behind the same `CallSite` interface. |
-
-### Measured against Stripe
-
-`providers/stripe.py` loads any two versions of `stripe/openapi` by git ref, so
-these are reproducible:
-
-```bash
-upkeep detect -p stripe --from v2300 --to v2484   # 2026-05-27 -> 2026-08-26
-upkeep detect -p stripe --from v2000 --to v2484   # 2025-08-27 -> 2026-08-26
-```
-
-Over three months (1,422 → 1,454 schemas): 6 breaking property removals, caught
-6/6 with no false positives, against independently computed ground truth. Over a
-year: 4 renames and 6 escalations — one rename still wrong, all of them
-correctly held at Tier B.
-
-Two coverage bugs came out of that exercise and are fixed: every one of Stripe's
-587 shared operations declares its parameters under `requestBody`, which the
-differ originally ignored entirely; and a bare property removal was being graded
-`deprecation` when being unable to say what replaced it makes it worse, not
-milder.
-
-### Measured against Twilio
-
-Twilio publishes one spec per product surface, so `--domain` selects one:
-
-```bash
-upkeep detect -p twilio --domain api_v2010 --from 2.0.0 --to 2.8.2
-upkeep detect -p twilio --domain preview   --from 2.0.0 --to 2.8.2
-```
-
-Sweeping all 60 surfaces across that window — 2024-06-18 to 2026-09-09, just
-over two years, of which 17 surfaces didn't exist at the start — found **122
-breaking changes**, spot-checked exactly against independently computed ground
-truth:
-
-| | |
-| --- | --- |
-| `endpoint_removed` | 71 |
-| `semantics_changed` | 51 |
-| `field_renamed` | **0** |
-
-Three more defects came out of it. Twilio declares a shared API-version header
-as a `$ref`, so that parameter entry has no `name` of its own — indexing it
-blind raised `KeyError` and took down the whole sweep. Parameters declared on a
-path item, which apply to every operation beneath it, were not being read. And a
-schema removed *outright* was invisible to a diff that only walks keys present
-in both versions: Twilio dropped ten `usage_record_*_enum_category` enums in one
-release and the differ graded that release `additive`.
-
-## What two real providers say about the thesis
+## What three real providers say about the thesis
 
 The design this repo started from assumed deterministic codemods would cover
 most real API churn, which is why Tier A was built first.
 
-Measured, that is wrong. Across a year of Stripe and 60 Twilio surfaces, the
-`rename_field` codemod — the only Tier A rule — had **essentially nothing to
-do**: zero renames in three months of Stripe, zero across all of Twilio, and of
-the five Stripe eventually produced, two were wrong. What actually breaks
-consumers is endpoints disappearing and fields vanishing with no stated
-successor. Both need judgment. Neither is a mechanical rename.
+Measured, that is half wrong — and the half that is wrong took two attempts to
+see, which is the section above. Renames are **frequent**: Stripe ships them
+constantly and says so in its own changelog. But they reach consumers mostly by
+coexistence and prose, where a key-set diff cannot see them, so the codemod tier
+starves for evidence it can act on rather than for work to do. What the diff
+*does* catch reliably is endpoints disappearing — 71 of Twilio's 122 — and
+fields vanishing with no stated successor. Both need judgment. Neither is a
+mechanical rename.
+
+Reading the providers' own guides sharpened it rather than reversing it. Across
+ten real migration guides, 88 extracted changes route to 90 work items — **2
+Tier A, 27 Tier B, 61 Tier C** — and Tier A stayed at 2 across all three
+extractors. Guides are dense with things worth telling a developer and nearly
+empty of things safe to fix for them.
 
 So the near-term value is not the patch. It is the sentence *"this release
 breaks these 14 call sites in your code, here they are, and here is what upkeep
@@ -458,12 +418,24 @@ wrong in.
 
 ## Next
 
-1. Point it at **Stripe**. `providers/stripe.py` loads any two versions of
-   `stripe/openapi` by git ref, so historical diffs are replayable — check
-   upkeep's output against what Stripe's own migration guides said to do. That's
-   free evaluation data.
-2. Open real PRs on ten OSS repos that use the SDK.
-3. Count what merges, and read what maintainers changed before merging. Each
-   edit is a missing deterministic rule.
+Pointing it at Stripe was the first item here, and it has been done — three
+months, a year, and 60 Twilio surfaces, all reproducible from the commands
+above. What that bought was mostly a corrected question. The remaining four:
+
+1. **An independent grader for the guide extractor.** Grounding proves nothing
+   was invented and says nothing about what was missed, and three perfectly
+   grounded runs disagree about roughly 40% of what any of them named. Someone
+   who has not seen the extractions has to write expectations per guide, so
+   recall and semantic precision can be scored against something other than the
+   extractor's own author. `evals/review.html` is the tool; the adjudication
+   queue is the work.
+2. **Contract replay.** Record real request/response pairs, assert outcomes
+   match across versions. Tier B model-assisted patching stays unbuilt until
+   something can verify it, and that order is deliberate.
+3. **Turn `detect` around.** Changelog as the primary input, spec diff as the
+   corroboration. `MigrationSpec` is already the interface, so nothing after
+   `detect` changes.
+4. **Open real PRs on OSS repos that use the SDK**, and read what maintainers
+   changed before merging. Each edit is a missing rule.
 
 Merged PRs from strangers are the only validation that counts.
