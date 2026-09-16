@@ -287,6 +287,8 @@ python evals/serve.py --open             # watch a run land, guide by guide
 | Changes | 88 | 91 | 93 |
 | Grounded — every symbol and every quoted line present in the source | 88/88 | 91/91 | 93/93 |
 | Fabrications | 0 | 0 | 0 |
+| Over-reads, judged against the guide | 0 | 0 | 0 |
+| **Recall**, against an adjudicated truth set of 68 | **87%** | **94%** | **93%** |
 | Tier A (auto-patchable) | **2** | **2** | **2** |
 
 Two findings survive the scrutiny in [`evals/README.md`](evals/README.md), which
@@ -299,18 +301,30 @@ also records what does not:
 - **Tier A is 2 in all three runs.** The ratio that argues for impact analysis
   over automatic patching did not move across three independent extractors.
 
-And the limit, stated plainly there: grounding catches invention and is blind to
-recall. Matching each run's records by the *claim* they make rather than the name
-they happened to attach, any two of these runs still disagree about a fifth to
-two-fifths of what a document says — and no automatic check in this repo can tell
-a miss from an over-read. That is what the review tool and the next step below
-are for.
+Getting to a recall figure took three passes. Matched on bare identifiers the
+three runs agree only 33% of the time — but nine of the first ten disagreements
+turned out to be one change under two names, so that number was measuring
+spelling. `evals/match.py` merges those, taking the queue from 91 cards to 31,
+and all 31 have now been judged against the guide text with the verdicts checked
+in at `evals/verdicts.json`.
 
-Getting that figure right took two passes. Matched on bare identifiers the same
-runs agree only 33% of the time, but nine of the first ten disagreements turned
-out to be one change under two names. `evals/match.py` merges those, which took
-the adjudication queue from 91 cards to 31 and left the first card as the one
-genuine miss.
+What that produced is the third row above and one more finding:
+
+- **Nothing was over-read either.** All 31 contested claims trace to something a
+  guide actually says. With grounding at 272/272 and no over-reads, precision is
+  settled for all three extractors and **recall is the entire problem** — which
+  is what this eval had claimed without being able to show it.
+- **The hand-made set has the worst recall**, and it is the one the original
+  88/88 rested on. Reading a guide in a session skipped items from lists the
+  same run was otherwise working through: five of six deprecated `ApiVersion`
+  methods, one of two methods named in a single sentence, one of two constructors
+  with their own code blocks.
+
+The caveat is on the record in `evals/README.md` and matters: those verdicts were
+made by Claude Opus 5, the same model that produced the `hand` run, which is not
+the independent grader this eval says it needs. Every verdict cites the guide
+line that settles it, so each is checkable — and the run sharing the grader's
+provenance came last.
 
 ## How often do providers actually rename? Measured wrong, twice.
 
@@ -430,13 +444,12 @@ Pointing it at Stripe was the first item here, and it has been done — three
 months, a year, and 60 Twilio surfaces, all reproducible from the commands
 above. What that bought was mostly a corrected question. The remaining four:
 
-1. **An independent grader for the guide extractor.** Grounding proves nothing
-   was invented and says nothing about what was missed, and three perfectly
-   grounded runs still make the same claim only 60% of the time. Someone who has
-   not seen the extractions has to write expectations per guide, so recall and
-   semantic precision can be scored against something other than the extractor's
-   own author. `evals/review.html` is the tool and its queue is down to 31 real
-   disagreements; judging them is the work.
+1. **A grader that is actually independent.** The 31 contested claims have been
+   judged and recall measured — 87/94/93% — but by the same model that produced
+   one of the three runs, which is the conflict this eval has warned about
+   throughout. The verdicts in `evals/verdicts.json` each cite a guide line, so
+   re-judging is cheap: a second model or a person reading the same lines either
+   confirms the numbers or moves them.
 2. **Contract replay.** Record real request/response pairs, assert outcomes
    match across versions. Tier B model-assisted patching stays unbuilt until
    something can verify it, and that order is deliberate.

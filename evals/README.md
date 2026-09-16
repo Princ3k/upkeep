@@ -386,7 +386,7 @@ genuine miss. Nobody over-read anything.
 | `Session` | flash named the class, hand named its two removed methods |
 | `WebhookHandler` | flash named the replacement, hand the removed class |
 | `GraphQL client` / `graphql-client` | the same gem deprecation, hyphenated differently |
-| **`ActiveResource`** | **real** — pro and flash recorded no equivalent under any label |
+| **`ActiveResource`** | judged **real** at the time. It is not — see below |
 
 So the contested set was mostly an artifact of matching on bare identifiers, and
 the agreement figures understated how consistently these models read the same
@@ -408,3 +408,105 @@ is about.
 The `duplicate` verdict stays, for the merges the matcher does not make. Each one
 it is used on now is a case worth teaching `match.py`, rather than the routine
 answer.
+
+## Judging all 31: recall, at last
+
+Every contested claim has now been judged against the guide text, one by one.
+`evals/verdicts.json` records each verdict with the line that settles it, and
+`build_review.py` folds them into the review page, so it opens on the
+adjudicated state.
+
+| | |
+| --- | --- |
+| Contested claims judged | 31 / 31 |
+| **Genuine misses** | **16** |
+| Same change under another name — merges `match.py` still fails to make | 15 |
+| **Over-reads** | **0** |
+
+**Nothing was over-read.** Every one of the 31 claims traces to something a
+guide actually says. Put beside 272/272 grounding, that settles the precision
+question for all three extractors and leaves recall as the entire problem —
+which is what this eval has claimed since the v10 miss, now measured rather
+than asserted.
+
+### Per-run recall
+
+Truth set: 46 claims all three runs made, plus 6 the matcher failed to merge but
+all three made anyway, plus the 16 genuine changes = **68**.
+
+| run | recall | missed |
+| --- | --- | --- |
+| hand (Claude Opus 5, in session) | **87%** | 9 |
+| gemini-3.1-pro | **94%** | 4 |
+| gemini-3-flash | **93%** | 5 |
+
+The hand-made set — the one this README leaned on for the original 88/88 — has
+the **worst** recall of the three. Both API runs read these documents more
+completely than the extraction done by reading them in a session.
+
+The misses have shape. `hand` drops items from lists it is otherwise working
+through: five of six deprecated `ApiVersion` methods recorded and
+`.latest_stable_version` left out; `Say.ssmlBreak()` recorded and `Say.break_()`
+left out of the same sentence; `Session.new` recorded and `Session.temp`, which
+has its own before/after block, left out. `flash` missed one thing four times —
+both TaskRouter Workers Statistics operations, in both the Python and the Node
+guide. `pro` missed three rows of one Shopify replacement table while recording
+the other two.
+
+**None of these is a judgement call.** Every miss is a symbol or a code block
+printed in the guide, next to others the same run did record.
+
+### The earlier verdict on `ActiveResource` was wrong
+
+The ten cards judged by hand above concluded `ActiveResource` was a real miss —
+"pro and flash recorded no equivalent under any label". They did. Both recorded
+it under the label `REST resources`, and both notes open with the guide's own
+sentence, "The use of `ActiveResource` has been deprecated". It is the one card
+in that first ten that a person got wrong, and it was wrong in the direction of
+inventing a miss that did not happen.
+
+That is worth more than the correction. Judging by identifier makes the
+different-name cases so overwhelming that the one card which looked different
+got waved through. Consolidating them first is what made the remaining 31
+judgeable.
+
+### What the 15 duplicates say about `match.py`
+
+Each is a merge the matcher should make and does not, and they fall into three
+groups:
+
+- **Near-identical notes, unrelated labels** (8 cards). `subresourceUris` against
+  `Response properties`; `@shopify/shopify-api/lib` against `Internal build
+  paths`; `order.transactions` against `REST Resource connections`;
+  `ActiveResource` against `REST resources`. The notes are near copies of one
+  guide sentence, but the prose rule also requires the labels' words to relate,
+  and these share none. **A high enough note containment should merge on its
+  own.**
+- **`param` is never compared** (2 cards). `ParamRequiredAdded` carries both
+  `op` and `param`; `label_of` takes the first non-empty, which is always `op`.
+  `hand` labelled the change by the parameter (`adminApiAccessToken`), the others
+  by the operation (`shopifyApi`), and they never meet.
+- **Empty notes block the note rules** (2 cards). `AccessToken` against
+  `Creating an AccessToken` is a clean label-word subset, but both other runs
+  left the note empty, so nothing could corroborate it.
+
+Fixing the first would take the queue from 31 to 23 and cost nothing in
+precision, since a near-copied note is stronger evidence than any label.
+
+### This grader is not independent
+
+`evals/README.md` has said throughout that recall needs "a different model, or a
+human writing expectations before seeing any extraction". **This is neither.**
+The `hand` run was produced by Claude Opus 5 and these verdicts were made by
+Claude Opus 5, which is exactly the self-grading this file warned about.
+
+Two things limit the damage, neither of them a substitute for an independent
+grader. Every verdict cites a line of the guide, so each one is checkable
+against the source rather than against the grader's judgement. And the result
+runs **against** the interest of the run sharing the grader's provenance: `hand`
+came last. A grader marking its own homework does not usually award itself the
+lowest score.
+
+So these numbers are worth more than the 88/88 and less than a real
+adjudication. The verdicts are checked in — disagreeing with one costs only
+reading the guide line it cites.

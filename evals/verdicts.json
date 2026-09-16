@@ -1,0 +1,238 @@
+{
+  "_comment": "Adjudication of the 31 contested claims, judged against the corpus text. Each verdict cites the guide line that settles it. 'duplicate' means the matcher should have merged the card and nobody missed anything; 'real' means the runs not listed in found_by missed a change the guide states; 'overread' means a run reported something the guide does not say.",
+  "_judged_by": "Claude Opus 5, in session. NOT independent of the `hand` run, which the same model produced - see evals/README.md.",
+  "verdicts": [
+    {
+      "guide": "shopify-ruby-v15",
+      "label": "ShopifyAPI::Context.setup",
+      "verdict": "duplicate",
+      "confidence": "low",
+      "why": "The guide's 'In your Context.setup:' block is the migration illustration for the LATEST_SUPPORTED_ADMIN_VERSION removal, which all three runs recorded. It says outright that api_version 'has always been required in Context.setup, so most apps should not be affected' - nothing about Context.setup itself changed. 'real' is defensible: pro alone captured the before/after code block.",
+      "merges_with": "ShopifyAPI::LATEST_SUPPORTED_ADMIN_VERSION"
+    },
+    {
+      "guide": "shopify-ruby-v10",
+      "label": "ActiveResource",
+      "verdict": "duplicate",
+      "confidence": "high",
+      "why": "Line 163: 'The use of ActiveResource has been deprecated, REST API requests must now be refactored...'. pro and flash both recorded this under the label 'REST resources' with the same sentence as the note. Same change, three labels.",
+      "merges_with": "REST resources"
+    },
+    {
+      "guide": "shopify-ruby-v10",
+      "label": "REST resources",
+      "verdict": "duplicate",
+      "confidence": "high",
+      "why": "Other half of the ActiveResource card above. hand labelled it 'ActiveResource'; all three runs found it.",
+      "merges_with": "ActiveResource"
+    },
+    {
+      "guide": "shopify-ruby-v10",
+      "label": "order.transactions",
+      "verdict": "duplicate",
+      "confidence": "high",
+      "why": "Lines 180-186, 'Note on resource connections'. pro recorded the identical passage under 'REST Resource connections'. All three found it.",
+      "merges_with": "REST Resource connections"
+    },
+    {
+      "guide": "shopify-ruby-v10",
+      "label": "REST Resource connections",
+      "verdict": "duplicate",
+      "confidence": "high",
+      "why": "Other half of order.transactions above.",
+      "merges_with": "order.transactions"
+    },
+    {
+      "guide": "shopify-ruby-v10",
+      "label": "Order#save",
+      "verdict": "real",
+      "confidence": "high",
+      "why": "Line 176 of the replacement table: order.save -> order.save!. pro recorded only two of the table's five rows (find-all and find-by-id) and has no equivalent record. A real miss by pro."
+    },
+    {
+      "guide": "shopify-ruby-v10",
+      "label": "Order#post",
+      "verdict": "real",
+      "confidence": "high",
+      "why": "Line 177: order.post(:close) -> order.close. No pro record. A real miss by pro."
+    },
+    {
+      "guide": "shopify-ruby-v10",
+      "label": "Order#delete",
+      "verdict": "real",
+      "confidence": "high",
+      "why": "Line 178: order.delete -> Order.delete(id: <id>). No pro record. A real miss by pro."
+    },
+    {
+      "guide": "shopify-ruby-v10",
+      "label": "Session Management",
+      "verdict": "real",
+      "confidence": "low",
+      "why": "Line 24: 'Removal of support for 3rd party cookies', plus lines 34-38 on session tokens and authenticatedFetch. Real text and a real removal, but the guide files it under 'New Features', so hand and pro skipping it is defensible rather than clearly wrong."
+    },
+    {
+      "guide": "shopify-ruby-older",
+      "label": "ShopifyAPI::ApiVersion.latest_stable_version",
+      "verdict": "real",
+      "confidence": "high",
+      "why": "Line 17, one of six deprecated ApiVersion methods in a single bullet list. hand recorded the other five and dropped this one. A real miss by hand."
+    },
+    {
+      "guide": "shopify-ruby-older",
+      "label": "ShopifyAPI::ApiVersion.version_lookup_mode",
+      "verdict": "real",
+      "confidence": "high",
+      "why": "Lines 21-30 introduce version lookup mode and the :raise_on_unknown setting. hand has no record. A real miss by hand."
+    },
+    {
+      "guide": "shopify-ruby-older",
+      "label": "ShopifyAPI::Session.temp",
+      "verdict": "real",
+      "confidence": "high",
+      "why": "Lines 49-57 give Session.temp its own before/after block, separate from Session.new. hand recorded only Session.new. A real miss by hand."
+    },
+    {
+      "guide": "shopify-ruby-older",
+      "label": "URL construction in find requires using api_version.construct_api_path...",
+      "verdict": "real",
+      "confidence": "high",
+      "why": "The '#### URL construction' section, lines ~85-99, with a full before/after block for api_version.construct_api_path. Neither hand nor flash recorded it. A real miss by both."
+    },
+    {
+      "guide": "shopify-js-v8",
+      "label": "2022-04",
+      "verdict": "real",
+      "confidence": "high",
+      "why": "'this library no longer supports versions 2022-04 and 2022-07'. Same change as the '2022-07' and 'Supported API versions' cards - flash split it in two, pro recorded one. hand recorded nothing. A real miss by hand."
+    },
+    {
+      "guide": "shopify-js-v8",
+      "label": "2022-07",
+      "verdict": "duplicate",
+      "confidence": "high",
+      "why": "flash's second half of the version-support removal; same sentence as the 2022-04 card.",
+      "merges_with": "2022-04"
+    },
+    {
+      "guide": "shopify-js-v8",
+      "label": "Supported API versions",
+      "verdict": "duplicate",
+      "confidence": "high",
+      "why": "pro's single record for the same sentence flash split into 2022-04 and 2022-07.",
+      "merges_with": "2022-04"
+    },
+    {
+      "guide": "shopify-js-v8",
+      "label": "adminApiAccessToken",
+      "verdict": "duplicate",
+      "confidence": "high",
+      "why": "'When calling shopifyApi, the adminApiAccessToken setting is now mandatory when isCustomStoreApp is true.' flash and pro recorded exactly this as param_required_added with op=shopifyApi, param=adminApiAccessToken. All three found it; the matcher compared op and never looked at param.",
+      "merges_with": "shopifyApi"
+    },
+    {
+      "guide": "shopify-js-v8",
+      "label": "shopifyApi",
+      "verdict": "duplicate",
+      "confidence": "high",
+      "why": "Other half of adminApiAccessToken above.",
+      "merges_with": "adminApiAccessToken"
+    },
+    {
+      "guide": "shopify-js-v8",
+      "label": "v5 types",
+      "verdict": "real",
+      "confidence": "high",
+      "why": "Final bullet of the guide: 'Removed deprecated v5 types.' hand has no record. A real miss by hand."
+    },
+    {
+      "guide": "shopify-js-v10",
+      "label": "@shopify/shopify-api/lib",
+      "verdict": "duplicate",
+      "confidence": "high",
+      "why": "flash recorded the same ESM/CJS build-path change under 'Internal build paths'. All three found it.",
+      "merges_with": "Internal build paths"
+    },
+    {
+      "guide": "shopify-js-v10",
+      "label": "Internal build paths",
+      "verdict": "duplicate",
+      "confidence": "high",
+      "why": "Other half of the card above.",
+      "merges_with": "@shopify/shopify-api/lib"
+    },
+    {
+      "guide": "twilio-python-upgrade",
+      "label": "instance._properties",
+      "verdict": "real",
+      "confidence": "medium",
+      "why": "'Internal refactor of instance._properties - Instance properties moved out of the generic _properties dict'. hand has no record. A real miss, though the guide itself calls it 'an implementation detail that should not be depended upon'."
+    },
+    {
+      "guide": "twilio-python-upgrade",
+      "label": "workers.cumulative_statistics",
+      "verdict": "real",
+      "confidence": "high",
+      "why": "TaskRouter Workers Statistics section, with explicit Old:/New: call lines. flash has no record for it. A real miss by flash."
+    },
+    {
+      "guide": "twilio-python-upgrade",
+      "label": "workers.real_time_statistics",
+      "verdict": "real",
+      "confidence": "high",
+      "why": "Same section, RealTimeStatistics half. flash has no record. A real miss by flash."
+    },
+    {
+      "guide": "twilio-node-upgrade",
+      "label": "AccessToken",
+      "verdict": "duplicate",
+      "confidence": "high",
+      "why": "Line 42: 'Creating an AccessToken requires an identity in the options'. flash and pro recorded it as param_required_added under op='Creating an AccessToken', param='identity'. All three found it; both their notes are empty, so no note-based rule could fire.",
+      "merges_with": "Creating an AccessToken"
+    },
+    {
+      "guide": "twilio-node-upgrade",
+      "label": "Creating an AccessToken",
+      "verdict": "duplicate",
+      "confidence": "high",
+      "why": "Other half of AccessToken above.",
+      "merges_with": "AccessToken"
+    },
+    {
+      "guide": "twilio-node-upgrade",
+      "label": "Response properties",
+      "verdict": "duplicate",
+      "confidence": "high",
+      "why": "Line 40, the Record-type change naming subresourceUris and links. hand recorded it under 'subresourceUris' with a near-identical note. All three found it.",
+      "merges_with": "subresourceUris"
+    },
+    {
+      "guide": "twilio-node-upgrade",
+      "label": "subresourceUris",
+      "verdict": "duplicate",
+      "confidence": "high",
+      "why": "Other half of Response properties above.",
+      "merges_with": "Response properties"
+    },
+    {
+      "guide": "twilio-node-upgrade",
+      "label": "Say.break_()",
+      "verdict": "real",
+      "confidence": "high",
+      "why": "Line 49: 'Say.ssmlBreak() and Say.break_() replaced by Say.break()'. The guide names two removed methods; hand recorded only ssmlBreak. A real miss by hand."
+    },
+    {
+      "guide": "twilio-node-upgrade",
+      "label": "workers.cumulativeStatistics",
+      "verdict": "real",
+      "confidence": "high",
+      "why": "Lines 76-82 with Old:/New: call lines. flash has no record. A real miss by flash."
+    },
+    {
+      "guide": "twilio-node-upgrade",
+      "label": "workers.realTimeStatistics",
+      "verdict": "real",
+      "confidence": "high",
+      "why": "Lines 83-87. flash has no record. A real miss by flash."
+    }
+  ]
+}

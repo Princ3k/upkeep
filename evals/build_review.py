@@ -55,6 +55,77 @@ def change_json(change, guide_text):
     }
 
 
+def apply_verdicts(guides, runs):
+    """Fold `verdicts.json` into the payload, resolving duplicate groups.
+
+    A card judged `duplicate` names the card it should have merged with. Those
+    links have to be followed before recall means anything: `pro` recorded the
+    js-v8 version removal under `Supported API versions`, and `flash` recorded
+    the same change as `2022-04` and `2022-07`. Counting the `2022-04` card's
+    own found_by credits flash and silently marks pro as having missed a change
+    it did record.
+
+    So each contested card is tagged with what it contributes:
+
+      truth_real   a genuine change, credited to every run in the merged group
+      truth_agreed every run found it; the matcher just failed to merge the
+                   cards, so it belongs with the agreed claims, not the queue
+      skip         folds into a claim that is already counted
+
+    Returns the seed verdict map for the page.
+    """
+    path = ROOT / "verdicts.json"
+    if not path.exists():
+        return {}
+    recorded = {(v["guide"], v["label"]): v
+                for v in json.loads(path.read_text())["verdicts"]}
+
+    seed = {}
+    for guide in guides:
+        stem = guide["stem"]
+        contested = {c["label"]: c for c in guide["claims"] if c["contested"]}
+
+        parent = {label: label for label in contested}
+
+        def find(label):
+            while parent[label] != label:
+                parent[label] = parent[parent[label]]
+                label = parent[label]
+            return label
+
+        for label in contested:
+            verdict = recorded.get((stem, label))
+            if verdict and verdict["verdict"] == "duplicate":
+                other = verdict.get("merges_with")
+                if other in parent:
+                    parent[find(label)] = find(other)
+
+        members = {}
+        for label in contested:
+            members.setdefault(find(label), []).append(label)
+
+        for root, group in members.items():
+            found = set()
+            for label in group:
+                found |= set(contested[label]["found_by"])
+            verdicts = {recorded.get((stem, m), {}).get("verdict") for m in group}
+            for label in group:
+                card = contested[label]
+                card["verdict"] = recorded.get((stem, label), {}).get("verdict")
+                card["merged_found_by"] = sorted(found)
+                if "real" in verdicts:
+                    card["counts_as"] = "truth_real" if label == root else "skip"
+                elif len(found) >= len(runs):
+                    card["counts_as"] = "truth_agreed" if label == root else "skip"
+                else:
+                    card["counts_as"] = "skip"
+
+        for label, card in contested.items():
+            if card.get("verdict"):
+                seed[f"{stem}__{label}"] = card["verdict"]
+    return seed
+
+
 def main() -> None:
     manifest = json.loads((ROOT / "corpus" / "manifest.json").read_text())
     guides = []
@@ -123,7 +194,8 @@ def main() -> None:
             "claims": claims,
         })
 
-    payload = {"runs": [n for n, _ in RUNS], "guides": guides}
+    seed = apply_verdicts(guides, [n for n, _ in RUNS])
+    payload = {"runs": [n for n, _ in RUNS], "guides": guides, "seed_verdicts": seed}
     body = json.dumps(payload, separators=(",", ":"))
     out = ROOT / "review-data.json"
     out.write_text(body)
@@ -136,7 +208,7 @@ def main() -> None:
     claims = sum(len(g["claims"]) for g in guides)
     print(f"wrote {out} and review-data.js — {len(guides)} guides, {claims} claims, {contested} of them "
           f"contested ({identifiers} under the old identifier matching), "
-          f"{out.stat().st_size // 1024} KB")
+          f"{len(seed)} seeded verdicts, {out.stat().st_size // 1024} KB")
 
 
 if __name__ == "__main__":

@@ -266,10 +266,20 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);
   }
 
   /* ---------------- persistence: db if granted, else this browser ------- */
+  /* Verdicts recorded in evals/verdicts.json, so the page opens on the
+     adjudicated state instead of an empty queue. A verdict this browser has
+     stored, or one from the shared db, overlays the seed rather than being
+     overwritten by it — judging always beats the checked-in answer. */
+  function seedVerdicts() {
+    var seed = DATA.seed_verdicts || {};
+    Object.keys(seed).forEach(function (k) { verdicts[k] = seed[k]; });
+  }
   function localLoad() {
     try {
       var raw = localStorage.getItem("upkeep-verdicts");
-      if (raw) verdicts = JSON.parse(raw) || Object.create(null);
+      if (!raw) return;
+      var stored = JSON.parse(raw) || {};
+      Object.keys(stored).forEach(function (k) { verdicts[k] = stored[k]; });
     } catch (e) { /* private window, blocked storage — page still works */ }
   }
   function localSave() {
@@ -441,7 +451,10 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);
     GUIDES.forEach(function (g) {
       (g.claims || []).forEach(function (c) {
         if (c.contested) out.push({ guide: g, leaf: c.label, foundBy: c.found_by,
-                                    members: c.members || [], reasons: c.reasons || [] });
+                                    members: c.members || [], reasons: c.reasons || [],
+                                    countsAs: c.counts_as || null,
+                                    mergedFoundBy: c.merged_found_by || null,
+                                    seeded: c.verdict || null });
       });
     });
     return out;
@@ -520,13 +533,39 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);
       '" aria-pressed="' + (current === value) + '">' + esc(label) + "</button>";
   }
 
+  /* A card judged `duplicate` names the card it should have merged with, and
+     build_review.py follows those links before the payload is written. Recall
+     has to use the result: pro recorded the js-v8 version removal under
+     `Supported API versions` while flash recorded it as `2022-04`, so crediting
+     the `2022-04` card's own found_by marks pro as having missed a change it
+     did record. `mergedFoundBy` is the union over the group, and `countsAs`
+     says which single card in the group carries it.
+
+     Those fields describe the recorded adjudication. Re-judge a card in the
+     browser and they no longer apply to it, so it falls back to its own
+     found_by — right for the card, and it does not silently keep crediting a
+     grouping the reviewer has just rejected. */
+  function resolved(it) {
+    var current = verdicts[key(it.guide.stem, it.leaf)] || null;
+    return it.countsAs && current === it.seeded;
+  }
   function renderRecall() {
     var items = contested();
-    var real = {}, judged = 0, dupes = 0, overreads = 0;
+    var real = {}, judged = 0, dupes = 0, overreads = 0, recovered = 0;
     items.forEach(function (it) {
       var v = verdicts[key(it.guide.stem, it.leaf)];
       if (!v || v === "unsure") return;
       judged++;
+      if (resolved(it)) {
+        if (it.countsAs === "truth_real") {
+          real[key(it.guide.stem, it.leaf)] = it.mergedFoundBy || it.foundBy;
+        } else if (it.countsAs === "truth_agreed") {
+          recovered++;               // every run found it; the matcher missed the merge
+        }
+        if (v === "duplicate") dupes++;
+        if (v === "overread") overreads++;
+        return;
+      }
       if (v === "duplicate") { dupes++; return; }   // nobody missed it; not truth
       if (v === "overread") { overreads++; return; }
       real[key(it.guide.stem, it.leaf)] = it.foundBy;
@@ -542,7 +581,7 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);
     // Agreed identifiers are real by construction; contested ones need a verdict.
     var agreedAll = GUIDES.reduce(function (n, g) {
       return n + (g.claims || []).filter(function (c) { return !c.contested; }).length;
-    }, 0);
+    }, 0) + recovered;
     board.innerHTML = RUNS.map(function (r) {
       var found = agreedAll;
       Object.keys(real).forEach(function (k) {
@@ -585,6 +624,7 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);
     saveVerdict(parts[0], leaf, verdicts[k] === v ? null : v);
   });
 
+  seedVerdicts();
   localLoad();
   renderOverview();
   renderPicker();
