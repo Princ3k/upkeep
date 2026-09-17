@@ -226,11 +226,18 @@ claim:
 | `qualified` | one name a suffix of the other — `Session#serialize` / `ShopifyAPI::Auth::Session#serialize` |
 | `member` | one name a proper prefix of the other, with corroboration — `Session` / `Session#serialize` |
 | `mention` | an unlabelled record, matched by the symbol its own note names |
+| `prose` | the notes agree and the labels' words relate — the three spellings of one Ruby bump |
+| `note` | the notes are near copies and a label is free text — `subresourceUris` / `Response properties` |
+| `label` | a strict subset of label words, where no note exists to corroborate |
+
+Every rule compares *every name a record carries*: `param_required_added` has an
+`op` and a `param`, and runs disagree about which one names the change.
 
 `shopify-ruby-v16` now collapses to exactly two claims, both found by all three
 runs, which is what that guide documents: one Ruby version bump and one removal
 of session serialization. The queue's first card is `ActiveResource` — the one
-real miss among the adjudicated ten — instead of nine spelling duplicates.
+card of the adjudicated ten that looked like a real miss — instead of nine
+spelling duplicates. (Judging all 31 later showed it was not one; see below.)
 
 **The number is not tuned.** Agreement sits at 60% for every note-similarity
 threshold from 0.20 to 0.75; the rules, not the ratio, do the discriminating.
@@ -420,7 +427,7 @@ adjudicated state.
 | --- | --- |
 | Contested claims judged | 31 / 31 |
 | **Genuine misses** | **16** |
-| Same change under another name — merges `match.py` still fails to make | 15 |
+| Same change under another name | 15 — 12 of which `match.py` now merges itself |
 | **Over-reads** | **0** |
 
 **Nothing was over-read.** Every one of the 31 claims traces to something a
@@ -470,28 +477,76 @@ different-name cases so overwhelming that the one card which looked different
 got waved through. Consolidating them first is what made the remaining 31
 judgeable.
 
-### What the 15 duplicates say about `match.py`
+### The 15 duplicates were a specification, and it is implemented
 
-Each is a merge the matcher should make and does not, and they fall into three
-groups:
+Each of the 15 was a merge the matcher should make and did not. They fell into
+three groups, and all three are now rules:
 
-- **Near-identical notes, unrelated labels** (8 cards). `subresourceUris` against
-  `Response properties`; `@shopify/shopify-api/lib` against `Internal build
-  paths`; `order.transactions` against `REST Resource connections`;
-  `ActiveResource` against `REST resources`. The notes are near copies of one
-  guide sentence, but the prose rule also requires the labels' words to relate,
-  and these share none. **A high enough note containment should merge on its
-  own.**
-- **`param` is never compared** (2 cards). `ParamRequiredAdded` carries both
-  `op` and `param`; `label_of` takes the first non-empty, which is always `op`.
-  `hand` labelled the change by the parameter (`adminApiAccessToken`), the others
-  by the operation (`shopifyApi`), and they never meet.
-- **Empty notes block the note rules** (2 cards). `AccessToken` against
-  `Creating an AccessToken` is a clean label-word subset, but both other runs
-  left the note empty, so nothing could corroborate it.
+| | cards | fix |
+| --- | --- | --- |
+| Near-identical notes, labels sharing no word | 8 | `note` — merge on note containment alone, labels ignored |
+| `param` never compared | 2 | every name a record carries is matched, not just the first one set |
+| Empty notes where a label subset already holds | 2 | `label` — a strict subset stands on its own when nothing can corroborate |
 
-Fixing the first would take the queue from 31 to 23 and cost nothing in
-precision, since a near-copied note is stronger evidence than any label.
+**12 of the 15 merged.** The queue went 31 → 19, claims 77 → 70, and three-way
+claim agreement 60% → **73%** (against 34% on bare identifiers). Per pairing:
+
+| | bare identifier | claim, before | claim, now |
+| --- | --- | --- | --- |
+| hand vs pro | 43% | 68% | **83%** |
+| hand vs flash | 56% | 61% | **72%** |
+| pro vs flash | 48% | 78% | **87%** |
+
+**Recall did not move: 87 / 94 / 93%.** That is the invariant worth checking —
+merging two records that describe one change cannot alter who found what, so a
+matcher fix must leave recall alone. It did.
+
+#### What guards the `note` rule
+
+Merging on prose alone sounds like the reckless option, and the corpus says
+which guard actually does the work. Of the pairs the adjudication says are one
+change, every one has a **free-text label**. Of the sibling pairs that must stay
+apart — `Session#serialize` against `Session.deserialize`, in three separate
+runs — every one is **two code labels**, and their notes reach containment of
+0.71, 0.71 and **1.000**.
+
+So no note threshold could ever separate the sibling pairs. What separates them
+is refusing to merge two names, whatever the prose around them says. The
+threshold (0.60) only decides how much prose counts as a quotation; the free-text
+requirement is what makes the rule safe.
+
+#### The fix caused an over-merge, and the adjudication caught it
+
+Comparing every name a record carries merged `ShopifyAPI::Session.new` with
+`ShopifyAPI::Session.temp`. Both are `param_required_added`, both name
+`api_version` as the parameter, and matching one record's alias against the
+other's alias made two separate constructors — each with its own before/after
+block in the guide — into one claim. That silently erased a genuine miss:
+`hand` recorded `.new` and not `.temp`.
+
+It was caught because `verdicts.json` is a test set. Checking that all 16
+judged-real claims survive as distinct contested claims with the same `found_by`
+is a check the eval did not have before, and it failed on the first attempt. An
+alias may now only meet the *other* record's primary name, never another alias.
+
+That check is now `tests/test_match_corpus.py`, running the matcher over all
+three real runs and asserting the adjudication still holds. No unit test could
+have caught this one: the fixture is three models reading a real document, and
+the damage only appears when you ask whether an adjudicated miss is still
+visible as a miss. Like `test_grounding.py`, it was verified by reintroducing
+the bug — removing the alias guard fails four tests, three of them corpus-level.
+
+#### The three that remain
+
+- **`@shopify/shopify-api/lib` against `Internal build paths`** (2 cards). Note
+  containment is 0.27: the two runs described the same ESM/CJS change in
+  genuinely different words rather than quoting one sentence. A bar low enough
+  to catch it is a bar low enough to merge unrelated changes.
+- **`ShopifyAPI::Context.setup`** (1 card). The lowest-confidence verdict of the
+  31 — it is the call-pattern illustration of the constants removal that all
+  three runs recorded, and "real" is defensible.
+
+Both are honest residue rather than bugs, which is the useful place to stop.
 
 ### This grader is not independent
 

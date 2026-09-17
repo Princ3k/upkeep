@@ -34,12 +34,26 @@ from upkeep.models import MigrationSpec
 ROOT = Path(__file__).parent
 
 
+NAME_FIELDS = ("symbol", "path", "op", "param")
+
+
 def label_of(change) -> str | None:
-    for attribute in ("symbol", "path", "op", "param"):
+    for attribute in NAME_FIELDS:
         value = getattr(change, attribute, None)
         if value:
             return str(value)
     return None
+
+
+def names_of(change) -> tuple[str, ...]:
+    """Every name a record carries, not just the first one set.
+
+    `ParamRequiredAdded` has both an `op` and a `param`, and runs disagree about
+    which names the change — one labelled the js-v8 change `adminApiAccessToken`
+    and two labelled it `shopifyApi`.
+    """
+    return tuple(str(getattr(change, a)) for a in NAME_FIELDS
+                 if getattr(change, a, None))
 
 
 def leaf_of(change) -> str | None:
@@ -146,7 +160,8 @@ def main() -> int:
             Record(run=run, guide=stem, index=i, kind=change.kind,
                    label=label_of(change) or "",
                    note=getattr(change, "note", "") or "",
-                   before=getattr(change, "before", None))
+                   before=getattr(change, "before", None),
+                   aliases=names_of(change))
             for run, spec in ((left_name, left), (right_name, right))
             for i, change in enumerate(spec.changes)
         ]

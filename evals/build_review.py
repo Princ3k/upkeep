@@ -46,6 +46,12 @@ def change_json(change, guide_text):
         "leaf": leaf_of(change),
         "label": (getattr(change, "symbol", None) or getattr(change, "path", None)
                   or getattr(change, "op", None) or getattr(change, "param", None) or ""),
+        # Every other name the record carries. `ParamRequiredAdded` has an `op`
+        # and a `param`, and runs disagree about which one names the change.
+        "aliases": [str(v) for v in (getattr(change, "symbol", None),
+                                     getattr(change, "path", None),
+                                     getattr(change, "op", None),
+                                     getattr(change, "param", None)) if v],
         "language": getattr(change, "language", None),
         "before": getattr(change, "before", None),
         "after": getattr(change, "after", None),
@@ -160,7 +166,8 @@ def main() -> None:
             leaves[name] = {c["leaf"] for c in changes if c["leaf"]}
             records.extend(
                 Record(run=name, guide=stem, index=i, kind=c["kind"],
-                       label=c["label"], note=c["note"], before=c["before"])
+                       label=c["label"], note=c["note"], before=c["before"],
+                       aliases=tuple(c["aliases"]))
                 for i, c in enumerate(changes)
             )
 

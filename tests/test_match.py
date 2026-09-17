@@ -160,6 +160,36 @@ def test_a_namespace_does_not_swallow_everything_beneath_it():
     assert same_claim(a, b) is None
 
 
+def test_two_operations_sharing_a_required_parameter_stay_apart():
+    """`Session.new` and `Session.temp` both start requiring `api_version`.
+
+    Comparing every name a record carries is what lets one run label a change by
+    its parameter and another by its operation. But an alias meeting another
+    alias merges any two operations that happen to require the same parameter —
+    here, two separate constructors each with its own before/after block in the
+    guide, and a real miss of `.temp` erased by the merge. An alias may only
+    meet the other record's primary name.
+    """
+    a = rec("flash", "ShopifyAPI::Session.new", kind="param_required_added")
+    b = rec("flash", "ShopifyAPI::Session.temp", kind="param_required_added")
+    a = Record(run="flash", guide="g", index=0, kind="param_required_added",
+               label="ShopifyAPI::Session.new",
+               aliases=("ShopifyAPI::Session.new", "api_version"))
+    b = Record(run="flash", guide="g", index=1, kind="param_required_added",
+               label="ShopifyAPI::Session.temp",
+               aliases=("ShopifyAPI::Session.temp", "api_version"))
+    assert same_claim(a, b) is None
+
+
+def test_a_parameter_name_meets_the_run_that_labelled_by_it():
+    """One run named the js-v8 change by its parameter, two by its operation."""
+    by_param = rec("hand", "adminApiAccessToken",
+                   note="adminApiAccessToken is now mandatory for custom store apps.")
+    by_op = Record(run="flash", guide="g", index=0, kind="param_required_added",
+                   label="shopifyApi", aliases=("shopifyApi", "adminApiAccessToken"))
+    assert same_claim(by_param, by_op) == "identical"
+
+
 def test_empty_labels_do_not_match_each_other():
     assert same_claim(rec("a", ""), rec("b", "")) is None
 

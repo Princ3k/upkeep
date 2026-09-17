@@ -302,11 +302,16 @@ also records what does not:
   over automatic patching did not move across three independent extractors.
 
 Getting to a recall figure took three passes. Matched on bare identifiers the
-three runs agree only 33% of the time — but nine of the first ten disagreements
+three runs agree only 34% of the time — but nine of the first ten disagreements
 turned out to be one change under two names, so that number was measuring
-spelling. `evals/match.py` merges those, taking the queue from 91 cards to 31,
-and all 31 have now been judged against the guide text with the verdicts checked
-in at `evals/verdicts.json`.
+spelling. `evals/match.py` merges records by the claim they make instead, which
+took the queue from 91 cards to 31; judging all 31 against the guide text then
+specified three more merge rules, and the queue is now **19** with agreement at
+**73%**. The verdicts are checked in at `evals/verdicts.json`.
+
+Recall did not move when those rules landed — 87/94/93 before and after — which
+is the invariant worth checking: merging two records that describe one change
+cannot alter who found what.
 
 What that produced is the third row above and one more finding:
 

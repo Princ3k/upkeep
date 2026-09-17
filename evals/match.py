@@ -50,6 +50,29 @@ two records were joined:
               code quote, so they read as unique findings and inflate the
               contested queue.
 
+`note`        The notes are near copies of each other and at least one label is
+              free text. Runs routinely quote the same guide sentence under
+              labels with no word in common — `subresourceUris` against
+              `Response properties`, `order.transactions` against `REST Resource
+              connections`. A near-copied note is stronger evidence than any
+              label, so this rule ignores the labels entirely.
+
+              The free-text requirement is the whole guard, and it is not a
+              threshold in disguise. `Session#serialize` and
+              `Session.deserialize` have notes that reach **1.000** containment
+              in one run — no note bar could ever separate them. What separates
+              them is that both labels are names, and two differing names are
+              two changes. Measured over the corpus: every pair this rule must
+              merge has a free-text label, and every sibling pair it must not
+              has two code labels.
+
+`label`       One label's words are a strict subset of the other's, at least one
+              is free text, and there is no note on one side to corroborate
+              with. `AccessToken` against `Creating an AccessToken`, where both
+              other runs left the note empty. A subset of words is already a
+              strong relation; requiring corroboration that cannot exist only
+              loses the match.
+
 `prose`       The notes overlap above a threshold *and* the labels' word sets
               relate. This is the rule that joins the three spellings of the
               Ruby bump, and `Node version` to `Node.js support`.
@@ -64,6 +87,13 @@ two records were joined:
               it for identifiers merges `Session#serialize` into
               `Session.deserialize`, whose label words differ by exactly one
               element and whose notes in one real run are near-identical prose.
+
+Every rule above compares *every name a record carries*, not just the one a
+caller happened to put first. `ParamRequiredAdded` has both an `op` and a
+`param`, and runs disagree about which is the change's name: one labelled the
+js-v8 change `adminApiAccessToken` (the parameter) and two labelled it
+`shopifyApi` (the operation). Passing the alternatives as `aliases` lets those
+meet.
 
 The corroboration requirements on the last two rules are what keep the matcher
 from collapsing real distinctions. `Session#serialize` and `Session.deserialize`
@@ -154,6 +184,15 @@ Without a floor, containment reads 1.0 whenever one note is two words long,
 which would let a terse record merge with anything that happened to repeat it.
 """
 
+STRONG_NOTE = 0.60
+"""Containment at which two notes are treated as quoting the same sentence.
+
+Chosen against the corpus rather than picked: of the pairs the adjudication in
+`verdicts.json` says are one change, the ones this rule has to carry sit at
+0.63 and above, and no pair it must keep apart is reachable at all, because the
+rule refuses two code labels whatever their notes say.
+"""
+
 
 def overlap(left: frozenset[str], right: frozenset[str]) -> float:
     """Containment: the shorter note drives the score, not the union.
@@ -202,6 +241,21 @@ class Record:
     label: str
     note: str = ""
     before: str | None = None
+    aliases: tuple[str, ...] = ()
+    """Other names this record carries, such as the `param` beside an `op`.
+
+    Runs disagree about which of them names the change, so every name-based
+    rule tries all of them rather than whichever one a caller put first.
+    """
+
+    @property
+    def names(self) -> tuple[str, ...]:
+        seen, out = set(), []
+        for name in (self.label, *self.aliases):
+            if name and name not in seen:
+                seen.add(name)
+                out.append(name)
+        return tuple(out)
 
     @property
     def leaf(self) -> str:
@@ -220,42 +274,56 @@ class Record:
         return line[:70] + ("..." if len(line) > 70 else "") if line else "(unlabelled)"
 
 
-def same_claim(a: Record, b: Record, threshold: float = 0.30) -> str | None:
+def same_claim(a: Record, b: Record, threshold: float = 0.30,
+               strong: float = STRONG_NOTE) -> str | None:
     """Return the name of the rule joining these two records, or None.
 
     Returning *why* rather than a bool is deliberate: the review tool shows the
     reason on each merged card, so a person adjudicating can see whether the
     matcher joined two records for a good reason or a coincidence.
     """
-    seg_a, seg_b = segments(a.label), segments(b.label)
+    names_a, names_b = a.names, b.names
     notes = overlap(note_tokens(a.note), note_tokens(b.note))
+    free_text = any(_is_free_text(n) for n in names_a + names_b)
 
-    if seg_a and seg_a == seg_b:
-        return "identical"
+    # An alias may only meet the *other* record's primary name, never another
+    # alias. Two `param_required_added` records can name different operations
+    # and the same parameter — flash records `Session.new` and `Session.temp`
+    # as each requiring `api_version` — and matching alias to alias merges two
+    # separate constructors into one claim, erasing a real miss of `.temp`.
+    pairs = [(x, y) for x in names_a for y in names_b
+             if x == a.label or y == b.label]
 
-    if a.label and norm_label(a.label) and norm_label(a.label) == norm_label(b.label):
-        return "spelling"
+    for x, y in pairs:
+        if segments(x) and segments(x) == segments(y):
+            return "identical"
+
+    for x, y in pairs:
+        if norm_label(x) and norm_label(x) == norm_label(y):
+            return "spelling"
 
     code_a, code_b = norm_code(a.before), norm_code(b.before)
     if code_a and code_a == code_b:
         return "code"
 
-    if seg_a and seg_b and seg_a != seg_b:
-        short, long_, short_rec, long_rec = (
-            (seg_a, seg_b, a, b) if len(seg_a) < len(seg_b) else (seg_b, seg_a, b, a)
-        )
+    for x, y in pairs:
+        seg_x, seg_y = segments(x), segments(y)
+        if not seg_x or not seg_y or seg_x == seg_y:
+            continue
+        short, long_ = (seg_x, seg_y) if len(seg_x) < len(seg_y) else (seg_y, seg_x)
+        short_rec, long_rec = (a, b) if len(seg_x) < len(seg_y) else (b, a)
         # Same trailing path: one run simply qualified the name further.
         if long_[-len(short):] == short:
             return "qualified"
         # Container and member: the same change only if a record says so.
         if long_[: len(short)] == short:
-            mentioned = long_rec.leaf and long_rec.leaf in note_tokens(short_rec.note)
-            if mentioned or notes >= threshold:
+            leaf = long_[-1]
+            if leaf in note_tokens(short_rec.note) or notes >= threshold:
                 return "member"
 
     # An unlabelled record, identified by the symbol its own note names.
-    if bool(seg_a) != bool(seg_b):
-        blank, named = (a, b) if not seg_a else (b, a)
+    if bool(names_a) != bool(names_b):
+        blank, named = (a, b) if not names_a else (b, a)
         # The note is matched token-for-token; the quoted code can only be
         # matched as a substring, so a short leaf is not allowed to try. `id`
         # occurs inside half the code in this corpus and means nothing.
@@ -266,12 +334,21 @@ def same_claim(a: Record, b: Record, threshold: float = 0.30) -> str | None:
             return "mention"
 
     # Prose labels: the notes agree and the labels' words relate.
-    words_a, words_b = label_words(a.label), label_words(b.label)
-    if words_a and words_b and notes >= threshold:
-        free_text = _is_free_text(a.label) or _is_free_text(b.label)
-        related = (words_a & words_b) if free_text else None
-        if related or words_a <= words_b or words_b <= words_a:
+    words_a = frozenset().union(*(label_words(n) for n in names_a)) if names_a else frozenset()
+    words_b = frozenset().union(*(label_words(n) for n in names_b)) if names_b else frozenset()
+    if words_a and words_b:
+        subset = words_a <= words_b or words_b <= words_a
+        if notes >= threshold and (free_text and (words_a & words_b) or subset):
             return "prose"
+        # Nothing to corroborate with: a strict subset stands on its own.
+        if subset and free_text and not (note_tokens(a.note) and note_tokens(b.note)):
+            return "label"
+
+    # Near-copies of one guide sentence, under labels that share no word. Only
+    # where a label is free text: two differing names are two changes, however
+    # alike the prose around them.
+    if free_text and notes >= strong:
+        return "note"
 
     return None
 
